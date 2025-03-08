@@ -1,4 +1,29 @@
-<input [(ngModel)]="lobbyCode" />
-<input [(ngModel)]="username" required="true" />
-<button (click)="joinLobby()">Join Lobby</button>
-<!-- <button (click)="createLobby()">Create Lobby</button> -->
+<div class="container">
+  <h1>Join the Quiz Show</h1>
+  <div class="p-fluid">
+    <div class="field">
+      <label for="username">Username</label>
+      <input
+        id="username"
+        [(ngModel)]="username"
+        placeholder="Enter your username"
+        required="true"
+        pInputText
+      />
+    </div>
+    <div class="field">
+      <label for="lobbyCode">Lobby Code</label>
+      <input
+        id="lobbyCode"
+        [(ngModel)]="lobbyCode"
+        placeholder="Enter lobby code"
+        pInputText
+      />
+    </div>
+    <p-button
+      label="JOIN LOBBY"
+      (click)="joinLobby()"
+      variant="outlined"
+    ></p-button>
+  </div>
+</div>

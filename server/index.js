@@ -48,6 +48,16 @@ io.use((socket, next) => {
 io.on("connection", (socket) => {
   console.log("a user connected");
 
+  //   lobby zum 1. mal betreten (lobby join)
+  // (username prüfen)
+  // überprüfen, ob lobbycode gültig
+
+  // einer bestehenden Lobby beitreten (lobby join)
+  // (username prüfen)
+  // überprüfen, ob lobbycode gültig
+
+  // lobby neuladen
+
   // send the current state of the lobby (buzzer) to a new user / to a reconnecting user
   // lobbycode required
 

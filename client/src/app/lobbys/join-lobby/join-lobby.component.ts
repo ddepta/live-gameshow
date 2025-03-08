@@ -2,12 +2,14 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { LobbyService } from '../lobby.service';
 import { FormsModule } from '@angular/forms';
-
+import { ButtonModule } from 'primeng/button';
+import { CardModule } from 'primeng/card';
+import { InputTextModule } from 'primeng/inputtext';
 @Component({
   selector: 'app-join-lobby',
   templateUrl: './join-lobby.component.html',
   styleUrls: ['./join-lobby.component.scss'],
-  imports: [FormsModule],
+  imports: [FormsModule, ButtonModule, CardModule, InputTextModule],
 })
 export class JoinLobbyComponent implements OnInit {
   lobbyCode!: string;
