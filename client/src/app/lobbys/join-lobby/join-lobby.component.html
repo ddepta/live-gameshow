@@ -1,8 +1,42 @@
 <div class="container">
-  <h1>Join the Quiz Show</h1>
-  <div class="p-fluid">
+  <div class="title-section">
+    <h1>JOIN THE <span class="highlight">LIVE</span> GAMESHOW</h1>
+  </div>
+
+  <div class="layout-container">
+    <div class="side-button left" (click)="createLobby()">
+      <div class="plus-container">
+        <ng-icon name="gameRetroController" class="plus" />
+      </div>
+      <p-button label="LOBBY ERSTELLEN" variant="outlined"></p-button>
+    </div>
+
+    <button class="center-circle">
+      <span>UPLOAD AVATAR</span>
+    </button>
+
+    <div class="side-button right">
+      <div class="lobby-code-container">
+        <label for="lobbyCode">LOBBYCODE</label>
+        <input
+          id="lobbyCode"
+          [(ngModel)]="lobbyCode"
+          placeholder="ABCDE"
+          pInputText
+          class="lobby-code-input"
+        />
+      </div>
+      <p-button
+        label="LOBBY BETRETEN"
+        (click)="joinLobby()"
+        variant="outlined"
+      ></p-button>
+    </div>
+  </div>
+
+  <div class="username-container">
     <div class="field">
-      <label for="username">Username</label>
+      <label for="username">USERNAME</label>
       <input
         id="username"
         [(ngModel)]="username"
@@ -11,19 +45,5 @@
         pInputText
       />
     </div>
-    <div class="field">
-      <label for="lobbyCode">Lobby Code</label>
-      <input
-        id="lobbyCode"
-        [(ngModel)]="lobbyCode"
-        placeholder="Enter lobby code"
-        pInputText
-      />
-    </div>
-    <p-button
-      label="JOIN LOBBY"
-      (click)="joinLobby()"
-      variant="outlined"
-    ></p-button>
   </div>
 </div>

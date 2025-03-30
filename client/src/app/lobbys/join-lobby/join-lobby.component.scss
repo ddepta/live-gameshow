@@ -2,21 +2,156 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   height: 100vh;
   text-align: center;
+  box-sizing: border-box;
+}
+
+.title-section {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 5vh;
+}
+
+h1 {
+  font-size: 60px;
+  margin: 0;
+
+  .highlight {
+    text-shadow: 0 0 20px var(--p-primary-color),
+      0 0 20px var(--p-primary-color), 0 0 20px var(--p-primary-color);
+  }
+}
+
+.layout-container {
+  height: 40vh;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 1000px;
+}
+
+.center-circle {
+  width: 25vh; /* 1/4 of the viewport height */
+  height: 25vh; /* 1/4 of the viewport height */
+  border-radius: 100%;
+  border: 2px solid var(--p-primary-color); /* Green border */
+  background-color: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  transition: all 0.3s ease;
+  padding: 0;
+  margin: 0 20px;
+  font-family: inherit;
+
+  box-shadow: 0 0 30px 0px var(--p-primary-color);
+
+  &:hover {
+    box-shadow: 0 0 35px 4px var(--p-primary-color);
+  }
+}
+
+.side-button {
+  z-index: 2;
+  padding: 0 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  &.left {
+    margin-right: auto;
+    cursor: pointer;
+  }
+
+  &.right {
+    margin-left: auto;
+  }
+
+  .plus-container {
+    margin-bottom: 15px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+
+    .plus {
+      width: 100px; /* Same height as input */
+      height: 100px; /* Same height as input */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--p-surface-950); // Maintaining your original color
+      transition: all 0.2s ease;
+
+      /* Style the SVG element itself */
+      ::ng-deep svg {
+        width: 100%;
+        height: 100%;
+        filter: 
+          /* Hard 1px outline - top, right, bottom, left */
+          // drop-shadow(0 -1px 0 var(--p-primary-color))
+          // drop-shadow(1px 0 0 var(--p-primary-color))
+          // drop-shadow(0 1px 0 var(--p-primary-color))
+          drop-shadow(0 0 1px var(--p-primary-color))
+          drop-shadow(0 0 1px var(--p-primary-color))
+          drop-shadow(0 0 6px var(--p-primary-500));
+      }
+    }
+  }
+  &:hover {
+    .plus-container {
+      .plus {
+        filter: 
+          // drop-shadow(0 -1px 0 var(--p-primary-color))
+          // drop-shadow(1px 0 0 var(--p-primary-color))
+          // drop-shadow(0 1px 0 var(--p-primary-color))
+          drop-shadow(0 0 4px var(--p-primary-500));
+      }
+    }
+  }
+}
+
+.lobby-code-container {
+  margin-bottom: 15px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.lobby-code-input {
+  font-size: 40px;
+  width: 150px;
+  height: 80px;
+  text-align: center;
+}
+
+.username-container {
+  flex: 1;
+  width: 100%;
+  max-width: 400px;
+  z-index: 2;
+  padding-top: 5vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
 }
 
 input {
   font-size: 30px;
+  width: 100%;
 }
 
-// :host ::ng-deep {
-//   .p-card {
-//     background-color: #1e1e1e; // Dark card background
-//     color: #fff; // White text
-//     border-radius: 10px;
-//     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-//     padding: 20px;
-//   }
-// }
+input::placeholder {
+  color: var(--p-primary-900);
+}
+
+.field {
+  margin-bottom: 15px;
+}

@@ -1,20 +1,26 @@
 /* You can add global styles to this file, and also import other style files */
 // body {
-    // margin: 0;
-    // font-family: 'Arial', sans-serif;
-    // background-color: #000; // Black background
-    // color: #fff; // White text
-  // }
-  body {
-    background-color: var(--p-surface-950);
-    font-family: 'Orbitron';
-    color: var(--p-primary-color);
+// margin: 0;
+// font-family: 'Arial', sans-serif;
+// background-color: #000; // Black background
+// color: #fff; // White text
+// }
+body {
+  background-color: var(--p-surface-950);
+  font-family: "Orbit";
+  color: var(--p-primary-color);
 
-    // color: var(--text-color);
-  }
-  @font-face {
-    font-family: 'Orbitron';
-    src: url('assets/fonts/Orbitron-VariableFont_wght.ttf') format('truetype');
-    font-weight: bold;
-    font-style: normal;
+  // color: var(--text-color);
+}
+
+@font-face {
+  font-family: "Orbit";
+  // src: url('assets/fonts/Orbitron-VariableFont_wght.ttf') format('truetype');
+  src: url("assets/fonts/Orbit-Regular.ttf") format("truetype");
+  font-weight: bold;
+  font-style: normal;
+}
+
+input {
+  box-shadow: 0 0 15px 0px var(--p-primary-color);
 }

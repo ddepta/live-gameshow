@@ -5,11 +5,16 @@ import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { typPlus, typPlusOutline } from '@ng-icons/typicons';
+import { gameRetroController } from '@ng-icons/game-icons';
+
 @Component({
   selector: 'app-join-lobby',
   templateUrl: './join-lobby.component.html',
   styleUrls: ['./join-lobby.component.scss'],
-  imports: [FormsModule, ButtonModule, CardModule, InputTextModule],
+  imports: [FormsModule, ButtonModule, CardModule, InputTextModule, NgIcon],
+  providers: [provideIcons({ typPlus, typPlusOutline, gameRetroController })],
 })
 export class JoinLobbyComponent implements OnInit {
   lobbyCode!: string;
