@@ -78,6 +78,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("lobby:join", (lobbyCode, username, callback) => {
+    console.log("lobby:joined");
     var validUsername = handleUsername(username, callback);
 
     if (validUsername) {
@@ -86,7 +87,7 @@ io.on("connection", (socket) => {
 
       if (lobbyCode) {
         callback({ lobbyCode: lobbyCode, token: token, username: username });
-        emitMessage(lobbyCode, "lobby:joined", username + "joined the lobby");
+        emitMessage(lobbyCode, "lobby:joined", username + " joined the lobby");
       }
     }
   });

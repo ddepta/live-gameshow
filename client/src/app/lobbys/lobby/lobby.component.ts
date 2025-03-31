@@ -24,7 +24,7 @@ export class LobbyComponent {
   ) {}
 
   ngOnInit(): void {
-    console.log('lobby');
+    console.log('lobby init');
     // this.lobbyCode = this.route.snapshot.paramMap.get('id') ?? '';
     this.route.params.subscribe((params: Params) => {
       this.lobbyCode = params['lobbyCode'];

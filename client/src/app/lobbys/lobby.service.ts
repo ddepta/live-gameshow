@@ -34,6 +34,7 @@ export class LobbyService {
   }
 
   public getLobbyJoins = () => {
+    console.log('lobby joinded');
     this.socket.on('lobby:joined', (message) => {
       this.lobbyJoinSubect.next(message);
     });

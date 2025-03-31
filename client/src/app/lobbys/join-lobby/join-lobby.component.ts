@@ -40,6 +40,13 @@ export class JoinLobbyComponent implements OnInit {
   }
 
   createLobby() {
-    this.lobbyService.joinLobby(this.username);
+    this.lobbyService.joinLobby(this.username).subscribe((result: any) => {
+      console.log('result: ', result);
+      if (result !== 'error') {
+        localStorage.setItem('jwt_token', result.token);
+        localStorage.setItem('username', result.username);
+        this.router.navigate(['/lobby', result.lobbyCode]);
+      }
+    });
   }
 }
