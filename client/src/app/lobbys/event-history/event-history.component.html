@@ -1,15 +1,19 @@
-<div *ngFor="let event of eventHistory">
-  <app-buzzer-event
-    *ngIf="event.action === 'buzzer:pressed'"
-    [event]="event"
-  ></app-buzzer-event>
-  <app-enter-leave-event
-    *ngIf="
-      event.action === 'lobby:moderator:joined' ||
-      event.action === 'lobby:user:joined' ||
-      event.action === 'lobby:moderator:left' ||
-      event.action === 'lobby:user:left'
-    "
-    [event]="event"
-  ></app-enter-leave-event>
+<div class="event-history-container">
+  <div class="events-area" #eventsArea>
+    <div class="event-item" *ngFor="let event of eventHistory">
+      <app-buzzer-event
+        *ngIf="event.action === 'buzzer:pressed'"
+        [event]="event"
+      ></app-buzzer-event>
+      <app-enter-leave-event
+        *ngIf="
+          event.action === 'lobby:moderator:joined' ||
+          event.action === 'lobby:user:joined' ||
+          event.action === 'lobby:moderator:left' ||
+          event.action === 'lobby:user:left'
+        "
+        [event]="event"
+      ></app-enter-leave-event>
+    </div>
+  </div>
 </div>

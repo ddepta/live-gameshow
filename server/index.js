@@ -284,7 +284,7 @@ io.on("connection", (socket) => {
 
   function getLobby(lobbyCode, username) {
     var user = users.find((user) => user.username === username);
-    console.log("getLobby", user);
+    console.log("user", user);
     console.log("username", username);
     if (user.lobbys.some((lobby) => lobby.lobbyCode === lobbyCode)) {
       socket.join(lobbyCode);

@@ -1,0 +1,10 @@
+<div class="user-panel-container">
+  <div class="users-list">
+    <ng-container *ngFor="let user of users; let last = last">
+      <div class="user-item">
+        <span class="user-name">{{ user.name }}</span>
+      </div>
+      <div class="divider" *ngIf="!last"></div>
+    </ng-container>
+  </div>
+</div>

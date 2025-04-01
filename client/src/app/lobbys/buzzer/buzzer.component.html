@@ -1,17 +1,24 @@
-<div *ngFor="let message of messageList">
-  <li>
-    {{ message }}
-  </li>
+<div class="buzzer-container">
+  <button
+    class="buzzer-button"
+    [class.buzzered]="activeBuzzer"
+    [disabled]="activeBuzzer"
+    (click)="buzzer()"
+  >
+    <div class="buzzer-inner">
+      <div class="pulse-ring"></div>
+      <div class="profile-placeholder">
+        <span *ngIf="!activeBuzzer">BUZZ!</span>
+        <div class="buzzer-status" *ngIf="activeBuzzer" @fadeIn>
+          <div class="buzzer-name">{{ buzzerName }}</div>
+          <div class="buzzer-text">HAT GEBUZZERT!</div>
+        </div>
+      </div>
+    </div>
+  </button>
+  <div class="reset-container" *ngIf="activeBuzzer">
+    <button class="reset-button" (click)="buzzerReset()">
+      <span>RESET</span>
+    </button>
+  </div>
 </div>
-
-<input
-  [(ngModel)]="newMessage"
-  (keyup)="$event.keyCode == 13 && sendMessage()"
-/>
-<button (click)="sendMessage()">Send Message</button>
-<button (click)="buzzerReset()">unbuzzer</button>
-<h1 *ngIf="activeBuzzer" @fadeIn>buzzered</h1>
-<br />
-<button (click)="buzzer()" [disabled]="activeBuzzer">
-  buzzer {{ buzzerName }}
-</button>

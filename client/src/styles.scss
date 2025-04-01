@@ -10,6 +10,21 @@ body {
   font-family: "Orbit";
   color: var(--p-primary-color);
 
+  scrollbar-color: var(--p-primary-color) var(--p-surface-950);
+  scrollbar-width: 6px;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--p-primary-color);
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
   // color: var(--text-color);
 }
 

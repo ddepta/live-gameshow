@@ -4,13 +4,23 @@ import { LobbyService } from '../lobby.service';
 import { Lobby, Event } from '../../types';
 import { BuzzerComponent } from '../buzzer/buzzer.component';
 import { EventHistoryComponent } from '../event-history/event-history.component';
+import { ChatComponent } from '../chat/chat.component';
+import { GamePreviewComponent } from '../game-preview/game-preview.component';
+import { InteractiveUserPanelComponent } from '../interactive-user-panel/interactive-user-panel.component';
 // import { Event, Lobby } from 'src/app/types';
 
 @Component({
   selector: 'app-lobby',
   templateUrl: './lobby.component.html',
   styleUrls: ['./lobby.component.scss'],
-  imports: [BuzzerComponent, EventHistoryComponent],
+  imports: [
+    BuzzerComponent,
+    EventHistoryComponent,
+    ChatComponent,
+    GamePreviewComponent,
+    InteractiveUserPanelComponent,
+    InteractiveUserPanelComponent,
+  ],
 })
 export class LobbyComponent {
   lobbyCode!: string;

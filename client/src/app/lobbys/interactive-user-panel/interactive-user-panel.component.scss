@@ -1,5 +1,4 @@
-.event-history-container {
-  height: 50vh;
+.user-panel-container {
   width: 100%;
   min-width: 200px;
   max-width: 400px;
@@ -11,13 +10,18 @@
   overflow: hidden;
 }
 
-.events-area {
+.panel-title {
+  padding: 12px;
+  font-weight: bold;
+  text-align: center;
+  font-size: 18px;
+  border-bottom: 1px solid var(--p-primary-color);
+}
+
+.users-list {
   flex: 1;
   overflow-y: auto;
-  padding: 15px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  padding: 0;
 
   &::-webkit-scrollbar {
     width: 6px;
@@ -33,14 +37,18 @@
   }
 }
 
-.event-item {
-  background-color: rgba(var(--p-primary-rgb), 0.1);
-  padding: 8px 12px;
-  border-radius: 8px;
-  max-width: 100%;
-  word-break: break-word;
+.user-item {
+  padding: 10px 15px;
+  display: flex;
+  align-items: center;
+}
 
-  &:nth-child(even) {
-    background-color: rgba(var(--p-primary-rgb), 0.2);
-  }
+.user-name {
+  font-size: 0.9rem;
+}
+
+.divider {
+  height: 1px;
+  background-color: var(--p-primary-700);
+  margin: 0 10px;
 }

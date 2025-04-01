@@ -23,23 +23,14 @@ const fadeOut = trigger('fadeOut', [exitTransition]);
   imports: [FormsModule, CommonModule],
 })
 export class BuzzerComponent {
-  newMessage = '';
-  messageList: string[] = [];
-
   activeBuzzer = false;
   buzzerName = '';
 
   @Input() lobbyCode!: string;
 
-  constructor(
-    private buzzerService: BuzzerService,
-    private messageService: MessageService
-  ) {}
+  constructor(private buzzerService: BuzzerService) {}
 
   ngOnInit() {
-    this.messageService.getNewMessage().subscribe((message: string) => {
-      this.messageList.push(message);
-    });
     this.buzzerService.getBuzzer().subscribe((message: string) => {
       this.getBuzzerAlert(message);
     });
@@ -56,12 +47,6 @@ export class BuzzerComponent {
   getBuzzerReset(message: string) {
     this.buzzerName = '';
     this.activeBuzzer = false;
-  }
-
-  sendMessage() {
-    console.log('sendMessage: ', this.newMessage);
-    this.messageService.sendMessage(this.newMessage);
-    this.newMessage = '';
   }
 
   buzzer() {
