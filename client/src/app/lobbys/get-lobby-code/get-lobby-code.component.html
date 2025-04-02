@@ -1,2 +1,6 @@
-<p-button [label]="buttonLabel" icon="pi pi-copy" variant="outlined" (click)="copyLobbyLink()">
+<p-button (click)="copyLobbyLink()" variant="outlined" class="copy-button">
+  <span class="button-content">
+    <ng-icon name="phosphorCopySimpleFill" size="24px"></ng-icon>
+    LOBBY-LINK KOPIEREN
+  </span>
 </p-button>

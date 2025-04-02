@@ -6,7 +6,14 @@
     </div>
   </div>
   <div class="input-area">
-    <input [(ngModel)]="newMessage" placeholder="Type a message..." pInputText (keyup.enter)="sendMessage()" />
-    <p-button icon="pi pi-send" (click)="sendMessage()" variant="outlined"></p-button>
+    <input
+      [(ngModel)]="newMessage"
+      placeholder="NACHRICHT..."
+      pInputText
+      (keyup.enter)="sendMessage()"
+    />
+    <p-button (click)="sendMessage()" class="icon-only-button">
+      <ng-icon name="phosphorPaperPlaneTilt" size="32px" />
+    </p-button>
   </div>
 </div>

@@ -4,12 +4,15 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
+import { phosphorPaperPlaneTilt } from '@ng-icons/phosphor-icons/regular';
+import { NgIcon, provideIcons } from '@ng-icons/core';
 
 @Component({
   selector: 'app-chat',
   templateUrl: './chat.component.html',
   styleUrl: './chat.component.scss',
-  imports: [FormsModule, CommonModule, ButtonModule, InputTextModule],
+  imports: [FormsModule, CommonModule, ButtonModule, InputTextModule, NgIcon],
+  providers: [provideIcons({ phosphorPaperPlaneTilt })],
 })
 export class ChatComponent {
   @ViewChild('messagesArea') private messagesArea!: ElementRef;

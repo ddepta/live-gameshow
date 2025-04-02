@@ -1,0 +1,21 @@
+:host {
+  display: block;
+  margin-top: 20px;
+}
+
+.copy-button {
+  width: 100%;
+}
+
+::ng-deep .copy-button {
+  .p-button {
+    width: 100%;
+  }
+}
+
+.button-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}

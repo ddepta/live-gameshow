@@ -59,10 +59,13 @@
   padding: 10px;
   border-top: 1px solid var(--p-primary-color);
   gap: 10px;
+  width: 100%;
 
   input {
     flex: 1;
     font-size: 16px;
+    min-width: 0; /* Critical for flex items to shrink below content width */
+    width: 100%;
 
     &::placeholder {
       color: var(--p-primary-900);
@@ -73,5 +76,33 @@
     button {
       height: 100%;
     }
+
+    &.icon-only-button {
+      button {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        color: var(--p-primary-color) !important;
+        padding: 0.25rem !important;
+
+        &:hover {
+          color: var(--p-primary-300) !important;
+        }
+
+        &:focus {
+          box-shadow: none !important;
+        }
+      }
+    }
+
+    /* Make sure button doesn't prevent input from shrinking */
+    flex-shrink: 0;
+    min-width: auto;
   }
+}
+
+/* Override PrimeNG's default input sizing behavior */
+::ng-deep .p-inputtext {
+  width: 100% !important;
+  min-width: 0 !important;
 }
