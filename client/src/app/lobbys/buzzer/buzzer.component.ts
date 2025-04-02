@@ -4,6 +4,8 @@ import { style, trigger, transition, animate } from '@angular/animations';
 import { BuzzerService } from '../buzzer.service';
 import { MessageService } from '../../message.service';
 import { CommonModule } from '@angular/common';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { phosphorLockLaminatedFill } from '@ng-icons/phosphor-icons/fill';
 
 const enterTransition = transition(':enter', [
   style({ opacity: 0 }),
@@ -19,11 +21,12 @@ const fadeOut = trigger('fadeOut', [exitTransition]);
   selector: 'app-buzzer',
   templateUrl: './buzzer.component.html',
   styleUrls: ['./buzzer.component.scss'],
-  // Remove this line as 'imports' is not valid here
-  imports: [FormsModule, CommonModule],
+  imports: [FormsModule, CommonModule, NgIcon],
+  providers: [provideIcons({ phosphorLockLaminatedFill })],
 })
 export class BuzzerComponent {
   activeBuzzer = false;
+  buzzerLocked = false;
   buzzerName = '';
 
   @Input() lobbyCode!: string;
@@ -35,8 +38,13 @@ export class BuzzerComponent {
     this.buzzerService.getBuzzer().subscribe((message: string) => {
       this.getBuzzerAlert(message);
     });
+
     this.buzzerService.getBuzzerReset().subscribe((message: string) => {
       this.getBuzzerReset(message);
+    });
+
+    this.buzzerService.getBuzzerLocked().subscribe((message: string) => {
+      this.getBuzzerLocked(message);
     });
   }
 
@@ -48,13 +56,26 @@ export class BuzzerComponent {
   getBuzzerReset(message: string) {
     this.buzzerName = '';
     this.activeBuzzer = false;
+    this.buzzerLocked = false;
+  }
+
+  getBuzzerLocked(message: string) {
+    this.buzzerLocked = true;
+    this.activeBuzzer = false;
+    this.buzzerName = '';
   }
 
   buzzer() {
-    this.buzzerService.buzzer(this.lobbyCode);
+    if (!this.buzzerLocked) {
+      this.buzzerService.buzzer(this.lobbyCode);
+    }
   }
 
-  buzzerReset() {
-    this.buzzerService.buzzerReset(this.lobbyCode);
+  toggleBuzzer() {
+    if (this.buzzerLocked || this.activeBuzzer) {
+      this.buzzerService.buzzerReset(this.lobbyCode);
+    } else {
+      this.buzzerService.buzzerLock(this.lobbyCode);
+    }
   }
 }

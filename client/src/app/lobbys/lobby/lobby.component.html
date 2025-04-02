@@ -15,7 +15,10 @@
       </div>
 
       <div class="buzzer-wrapper">
-        <app-buzzer [lobbyCode]="lobbyCode"></app-buzzer>
+        <app-buzzer
+          [lobbyCode]="lobbyCode"
+          [isModerator]="lobby?.isModerator"
+        ></app-buzzer>
       </div>
     </div>
 

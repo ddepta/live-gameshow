@@ -2,13 +2,19 @@
   <button
     class="buzzer-button"
     [class.buzzered]="activeBuzzer"
-    [disabled]="activeBuzzer"
+    [class.locked]="buzzerLocked"
+    [disabled]="activeBuzzer || buzzerLocked"
     (click)="buzzer()"
   >
     <div class="buzzer-inner">
       <div class="pulse-ring"></div>
       <div class="profile-placeholder">
-        <span *ngIf="!activeBuzzer">BUZZ!</span>
+        <span *ngIf="!activeBuzzer && !buzzerLocked">BUZZ!</span>
+        <ng-icon
+          *ngIf="buzzerLocked"
+          name="phosphorLockLaminatedFill"
+          size="3rem"
+        ></ng-icon>
         <div class="buzzer-status" *ngIf="activeBuzzer" @fadeIn>
           <div class="buzzer-name">{{ buzzerName }}</div>
           <div class="buzzer-text">BUZZER</div>
@@ -16,9 +22,14 @@
       </div>
     </div>
   </button>
-  <div class="reset-container" *ngIf="activeBuzzer">
-    <button class="reset-button" (click)="buzzerReset()">
-      <span>RESET</span>
-    </button>
+
+  <!-- Replace toggle button with lock control for moderator -->
+  <div class="lock-container" *ngIf="isModerator">
+    <span
+      class="lock"
+      [class.unlocked]="!buzzerLocked && !activeBuzzer"
+      (click)="toggleBuzzer()"
+    >
+    </span>
   </div>
 </div>

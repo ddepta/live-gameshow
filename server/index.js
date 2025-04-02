@@ -119,6 +119,17 @@ io.on("connection", (socket) => {
     buzzerStateChanged("buzzer:reset", lobbyCode);
   });
 
+  socket.on("buzzer:locked", (lobbyCode) => {
+    // Check if user is moderator before allowing lock
+    var foundUser = findUserBySocketId(socket.id);
+    if (foundUser) {
+      const lobby = lobbys.find((lobby) => lobby.lobbyCode === lobbyCode);
+      if (lobby && lobby.moderator.username === foundUser.username) {
+        buzzerStateChanged("buzzer:locked", lobbyCode);
+      }
+    }
+  });
+
   socket.on("disconnect", () => {
     var simplifiedUser = findSimplifiedUserBySocketId(socket.id);
     if (simplifiedUser) {

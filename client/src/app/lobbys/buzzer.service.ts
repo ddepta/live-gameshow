@@ -9,6 +9,7 @@ import { SocketService } from '../socket.service';
 export class BuzzerService {
   buzzerSubject = new Subject<any>();
   buzzerResetSubject = new Subject<any>();
+  buzzerLockedSubject = new Subject<any>();
   private socket!: Socket;
 
   constructor(private socketService: SocketService) {
@@ -19,9 +20,12 @@ export class BuzzerService {
     this.socket.emit('buzzer:pressed', lobbyCode);
   }
 
-  // TODO: check if lobby-moderator
   public buzzerReset(lobbyCode: string) {
     this.socket.emit('buzzer:reset', lobbyCode);
+  }
+
+  public buzzerLock(lobbyCode: string) {
+    this.socket.emit('buzzer:locked', lobbyCode);
   }
 
   public getBuzzer = () => {
@@ -37,5 +41,12 @@ export class BuzzerService {
       this.buzzerResetSubject.next(message);
     });
     return this.buzzerResetSubject;
+  };
+
+  public getBuzzerLocked = () => {
+    this.socket.on('buzzer:locked', (message) => {
+      this.buzzerLockedSubject.next(message);
+    });
+    return this.buzzerLockedSubject;
   };
 }
