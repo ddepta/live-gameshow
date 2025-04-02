@@ -289,7 +289,15 @@ io.on("connection", (socket) => {
     if (user.lobbys.some((lobby) => lobby.lobbyCode === lobbyCode)) {
       socket.join(lobbyCode);
       sendCurrentBuzzerState(lobbyCode);
-      return lobbys.find((lobby) => lobby.lobbyCode === lobbyCode);
+
+      // Get the lobby
+      const lobby = lobbys.find((lobby) => lobby.lobbyCode === lobbyCode);
+
+      // Check if the user is the moderator
+      const isModerator = lobby.moderator.username === username;
+
+      // Add moderator status to the response
+      return { ...lobby, isModerator };
     }
 
     return { error: "No access to lobby" };

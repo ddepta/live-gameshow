@@ -2,13 +2,20 @@ import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
 import { Socket, io } from 'socket.io-client';
 import { SocketService } from '../socket.service';
+import {
+  Lobby,
+  User,
+  BuzzerState,
+  EventHistory,
+  JoinLobbyResponse,
+} from '../types';
 
 @Injectable({
   providedIn: 'root',
 })
 export class LobbyService {
   joinLobbySubject = new Subject<any>();
-  lobbySubject = new Subject<any>();
+  lobbySubject = new Subject<Lobby>();
   lobbyJoinSubect = new Subject<any>();
 
   private socket!: Socket;
@@ -18,16 +25,19 @@ export class LobbyService {
   }
 
   public joinLobby(username: string, lobbyCode?: string) {
-    let result: any;
-    this.socket.emit('lobby:join', lobbyCode, username, (response: any) => {
-      this.joinLobbySubject.next(response);
-    });
+    this.socket.emit(
+      'lobby:join',
+      lobbyCode,
+      username,
+      (response: JoinLobbyResponse) => {
+        this.joinLobbySubject.next(response);
+      }
+    );
     return this.joinLobbySubject;
   }
 
   public getLobby(lobbyCode: string) {
-    let result: any;
-    this.socket.emit('lobby:get', lobbyCode, (response: any) => {
+    this.socket.emit('lobby:get', lobbyCode, (response: Lobby) => {
       this.lobbySubject.next(response);
     });
     return this.lobbySubject;

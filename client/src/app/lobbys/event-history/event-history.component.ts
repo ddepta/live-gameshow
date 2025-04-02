@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { LobbyService } from '../lobby.service';
-import { Lobby, Event } from '../../types';
+import { Lobby, EventHistory } from '../../types';
 import { BuzzerEventComponent } from './buzzer-event/buzzer-event.component';
 import { EnterLeaveEventComponent } from './enter-leave-event/enter-leave-event.component';
 import { CommonModule } from '@angular/common';
@@ -12,7 +12,7 @@ import { CommonModule } from '@angular/common';
   imports: [BuzzerEventComponent, EnterLeaveEventComponent, CommonModule],
 })
 export class EventHistoryComponent implements OnInit {
-  @Input() eventHistory: Event[] = [];
+  @Input() eventHistory: EventHistory[] = [];
 
   constructor(private lobbyService: LobbyService) {}
 

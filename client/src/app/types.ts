@@ -1,8 +1,15 @@
-export interface Event {
+export interface EventHistory {
   action: string;
   socketId: string;
   username: string;
   data?: any;
+}
+
+export interface BuzzerState {
+  action: string;
+  socketId: string;
+  username: string;
+  data: string;
 }
 
 export interface User {
@@ -16,6 +23,14 @@ export interface Lobby {
   moderator: User;
   users?: User[];
   isActive: boolean;
-  currentBuzzerState?: Event;
-  eventHistory?: Event[];
+  currentBuzzerState?: BuzzerState;
+  eventHistory?: EventHistory[];
+  isModerator?: boolean;
+}
+
+export interface JoinLobbyResponse {
+  lobbyCode: string;
+  token: string;
+  username: string;
+  error?: string;
 }

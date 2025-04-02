@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { Event } from '../../../types';
+import { EventHistory } from '../../../types';
 
 @Component({
   selector: 'app-enter-leave-event',
@@ -7,7 +7,7 @@ import { Event } from '../../../types';
   styleUrls: ['./enter-leave-event.component.scss'],
 })
 export class EnterLeaveEventComponent implements OnInit {
-  @Input() event!: Event;
+  @Input() event!: EventHistory;
   output = '';
 
   ngOnInit(): void {

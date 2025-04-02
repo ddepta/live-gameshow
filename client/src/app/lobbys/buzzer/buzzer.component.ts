@@ -27,6 +27,7 @@ export class BuzzerComponent {
   buzzerName = '';
 
   @Input() lobbyCode!: string;
+  @Input() isModerator?: boolean;
 
   constructor(private buzzerService: BuzzerService) {}
 

@@ -30,7 +30,7 @@ export class JoinLobbyComponent implements OnInit {
     this.lobbyService
       .joinLobby(this.username, this.lobbyCode)
       .subscribe((result: any) => {
-        console.log('result: ', result);
+        console.log('join lobby result: ', result);
         if (result !== 'error') {
           localStorage.setItem('jwt_token', result.token);
           localStorage.setItem('username', result.username);

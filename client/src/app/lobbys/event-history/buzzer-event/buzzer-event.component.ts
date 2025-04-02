@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { Event } from '../../../types';
+import { EventHistory } from '../../../types';
 
 @Component({
   selector: 'app-buzzer-event',
@@ -7,5 +7,5 @@ import { Event } from '../../../types';
   styleUrls: ['./buzzer-event.component.scss'],
 })
 export class BuzzerEventComponent {
-  @Input() event!: Event;
+  @Input() event!: EventHistory;
 }
