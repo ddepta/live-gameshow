@@ -35,10 +35,13 @@ h1 {
 }
 
 .center-circle {
-  width: 25vh; /* 1/4 of the viewport height */
-  height: 25vh; /* 1/4 of the viewport height */
+  width: 25vh;
+  /* 1/4 of the viewport height */
+  height: 25vh;
+  /* 1/4 of the viewport height */
   border-radius: 100%;
-  border: 2px solid var(--p-primary-color); /* Green border */
+  border: 2px solid var(--p-primary-color);
+  /* Green border */
   background-color: transparent;
   cursor: pointer;
   display: flex;
@@ -80,8 +83,10 @@ h1 {
     justify-content: center;
 
     .plus {
-      width: 150px; /* Same height as input */
-      height: 100px; /* Same height as input */
+      width: 150px;
+      /* Same height as input */
+      height: 100px;
+      /* Same height as input */
       display: flex;
       align-items: center;
       justify-content: center;
@@ -92,21 +97,20 @@ h1 {
       ::ng-deep svg {
         width: 100%;
         height: 100%;
-        filter: 
+        filter:
           /* Hard 1px outline - top, right, bottom, left */
           // drop-shadow(0 -1px 0 var(--p-primary-color))
           // drop-shadow(1px 0 0 var(--p-primary-color))
           // drop-shadow(0 1px 0 var(--p-primary-color))
-          drop-shadow(0 0 1px var(--p-primary-color))
-          drop-shadow(0 0 1px var(--p-primary-color))
-          drop-shadow(0 0 6px var(--p-primary-500));
+          drop-shadow(0 0 1px var(--p-primary-color)) drop-shadow(0 0 1px var(--p-primary-color)) drop-shadow(0 0 6px var(--p-primary-500));
       }
     }
   }
+
   &:hover {
     .plus-container {
       .plus {
-        filter: 
+        filter:
           // drop-shadow(0 -1px 0 var(--p-primary-color))
           // drop-shadow(1px 0 0 var(--p-primary-color))
           // drop-shadow(0 1px 0 var(--p-primary-color))
@@ -134,7 +138,7 @@ h1 {
 .username-container {
   flex: 1;
   width: 100%;
-  max-width: 400px;
+  max-width: 300px;
   z-index: 2;
   padding-top: 5vh;
   display: flex;

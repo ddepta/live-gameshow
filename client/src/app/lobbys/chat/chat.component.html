@@ -1,20 +1,12 @@
 <div class="chat-container">
+  <h3 class="chat-title">CHAT</h3>
   <div class="messages-area" #messagesArea>
     <div class="message" *ngFor="let message of messageList">
       {{ message }}
     </div>
   </div>
   <div class="input-area">
-    <input
-      [(ngModel)]="newMessage"
-      placeholder="Type a message..."
-      pInputText
-      (keyup.enter)="sendMessage()"
-    />
-    <p-button
-      icon="pi pi-send"
-      (click)="sendMessage()"
-      variant="outlined"
-    ></p-button>
+    <input [(ngModel)]="newMessage" placeholder="Type a message..." pInputText (keyup.enter)="sendMessage()" />
+    <p-button icon="pi pi-send" (click)="sendMessage()" variant="outlined"></p-button>
   </div>
 </div>

@@ -1,7 +1,7 @@
 .user-panel-container {
   width: 100%;
   min-width: 200px;
-  max-width: 400px;
+  max-width: 300px;
   display: flex;
   flex-direction: column;
   border: 2px solid var(--p-primary-color);
@@ -11,10 +11,11 @@
 }
 
 .panel-title {
-  padding: 12px;
   font-weight: bold;
   text-align: center;
   font-size: 18px;
+  padding: 10px 0;
+  margin: 0;
   border-bottom: 1px solid var(--p-primary-color);
 }
 

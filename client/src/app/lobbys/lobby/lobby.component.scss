@@ -24,7 +24,7 @@ h1 {
 
 .lobby-container {
   display: grid;
-  grid-template-columns: minmax(200px, 400px) 1fr minmax(200px, 400px);
+  grid-template-columns: minmax(200px, 300px) 1fr minmax(200px, 300px);
   grid-template-areas: "left-panel center-area right-panel";
   gap: 20px;
   flex: 1;

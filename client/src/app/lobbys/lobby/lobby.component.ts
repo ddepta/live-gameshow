@@ -7,6 +7,7 @@ import { EventHistoryComponent } from '../event-history/event-history.component'
 import { ChatComponent } from '../chat/chat.component';
 import { GamePreviewComponent } from '../game-preview/game-preview.component';
 import { InteractiveUserPanelComponent } from '../interactive-user-panel/interactive-user-panel.component';
+import { GetLobbyCodeComponent } from '../get-lobby-code/get-lobby-code.component';
 // import { Event, Lobby } from 'src/app/types';
 
 @Component({
@@ -19,7 +20,7 @@ import { InteractiveUserPanelComponent } from '../interactive-user-panel/interac
     ChatComponent,
     GamePreviewComponent,
     InteractiveUserPanelComponent,
-    InteractiveUserPanelComponent,
+    GetLobbyCodeComponent
   ],
 })
 export class LobbyComponent {
@@ -31,7 +32,7 @@ export class LobbyComponent {
     private router: Router,
     private route: ActivatedRoute,
     private lobbyService: LobbyService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     console.log('lobby init');
