@@ -42,6 +42,30 @@
   padding: 10px 15px;
   display: flex;
   align-items: center;
+  gap: 8px;
+  position: relative;
+
+  &.moderator {
+    font-weight: bold;
+    color: var(--p-primary-color);
+  }
+
+  .kick-icon {
+    margin-left: auto;
+    color: var(--p-danger-color, #f44336);
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s, transform 0.2s;
+
+    &:hover {
+      opacity: 1;
+      transform: scale(1.1);
+    }
+  }
+}
+
+.moderator-icon {
+  color: var(--p-primary-color);
 }
 
 .user-name {
@@ -52,4 +76,11 @@
   height: 1px;
   background-color: var(--p-primary-700);
   margin: 0 10px;
+}
+
+.no-users {
+  padding: 20px;
+  text-align: center;
+  font-style: italic;
+  color: var(--p-text-color-secondary);
 }

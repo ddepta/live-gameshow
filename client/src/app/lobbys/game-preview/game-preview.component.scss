@@ -8,7 +8,7 @@
   border-radius: 8px;
   overflow: hidden;
   background-color: var(--p-surface-card);
-  max-height: calc(60vh - 100px); // Limit maximum height
+  max-height: calc(66vh - 100px); // Limit maximum height
 }
 
 .game-title {
@@ -28,7 +28,7 @@
 
 .game-description {
   text-align: left;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   line-height: 1.4;
   padding: 15px 0;
 

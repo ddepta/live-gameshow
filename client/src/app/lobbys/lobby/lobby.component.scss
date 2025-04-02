@@ -32,6 +32,9 @@ h1 {
 
 .left-panel {
   grid-area: left-panel;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .center-area {
@@ -53,4 +56,7 @@ h1 {
 
 .right-panel {
   grid-area: right-panel;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }

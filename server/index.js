@@ -130,6 +130,67 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on("lobby:kick", (lobbyCode, userSocketId) => {
+    console.log("lobby:kick", lobbyCode, userSocketId);
+
+    // Check if requester is a valid user
+    const requestingUser = findUserBySocketId(socket.id);
+    if (!requestingUser) {
+      console.log("User not found for socket ID:", socket.id);
+      return;
+    }
+
+    // Find the lobby
+    const lobbyIndex = lobbys.findIndex(
+      (lobby) => lobby.lobbyCode === lobbyCode
+    );
+    if (lobbyIndex === -1) {
+      console.log("Lobby not found:", lobbyCode);
+      return;
+    }
+
+    const lobby = lobbys[lobbyIndex];
+
+    // Check if requester is the moderator
+    if (lobby.moderator.username !== requestingUser.username) {
+      console.log("User is not moderator:", requestingUser.username);
+      return;
+    }
+
+    // Find the user to kick
+    const userToKickIndex = lobby.users.findIndex(
+      (user) => user.socketId === userSocketId
+    );
+    if (userToKickIndex === -1) {
+      console.log("User to kick not found:", userSocketId);
+      return;
+    }
+
+    const userToKick = lobby.users[userToKickIndex];
+
+    // Remove user from lobby
+    lobby.users.splice(userToKickIndex, 1);
+
+    // Add event to history
+    addEventToLobbyEventHistory(
+      lobbyCode,
+      "lobby:user:kicked",
+      userToKick.username,
+      { kickedBy: requestingUser.username }
+    );
+
+    // Notify the kicked user
+    io.to(userSocketId).emit("lobby:kicked", {
+      message: "You have been kicked from the lobby",
+    });
+
+    // Notify the lobby
+    emitMessage(lobbyCode, "lobby:user:kicked", userToKick.username);
+
+    // Remove the lobby reference from user's list
+    removeUserLobbyReference(userToKick.username, lobbyCode);
+  });
+
   socket.on("disconnect", () => {
     var simplifiedUser = findSimplifiedUserBySocketId(socket.id);
     if (simplifiedUser) {
@@ -297,18 +358,20 @@ io.on("connection", (socket) => {
     var user = users.find((user) => user.username === username);
     console.log("user", user);
     console.log("username", username);
-    if (user.lobbys.some((lobby) => lobby.lobbyCode === lobbyCode)) {
-      socket.join(lobbyCode);
-      sendCurrentBuzzerState(lobbyCode);
+    if (user.lobbys) {
+      if (user.lobbys.some((lobby) => lobby.lobbyCode === lobbyCode)) {
+        socket.join(lobbyCode);
+        sendCurrentBuzzerState(lobbyCode);
 
-      // Get the lobby
-      const lobby = lobbys.find((lobby) => lobby.lobbyCode === lobbyCode);
+        // Get the lobby
+        const lobby = lobbys.find((lobby) => lobby.lobbyCode === lobbyCode);
 
-      // Check if the user is the moderator
-      const isModerator = lobby.moderator.username === username;
+        // Check if the user is the moderator
+        const isModerator = lobby.moderator.username === username;
 
-      // Add moderator status to the response
-      return { ...lobby, isModerator };
+        // Add moderator status to the response
+        return { ...lobby, isModerator };
+      }
     }
 
     return { error: "No access to lobby" };
@@ -433,6 +496,20 @@ function generateLobbyCode() {
   } while (lobbys.some((lobby) => lobby.lobbyCode === lobbyCode));
 
   return lobbyCode;
+}
+
+function removeUserLobbyReference(username, lobbyCode) {
+  const userIndex = users.findIndex((user) => user.username === username);
+  if (userIndex === -1) return;
+
+  const user = users[userIndex];
+  const lobbyIndex = user.lobbys.findIndex(
+    (lobby) => lobby.lobbyCode === lobbyCode
+  );
+  if (lobbyIndex === -1) return;
+
+  user.lobbys.splice(lobbyIndex, 1);
+  console.log(`Removed lobby ${lobbyCode} reference from user ${username}`);
 }
 
 httpServer.listen(port, () => console.log(`listening on port ${port}`));

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
 import { Socket, io } from 'socket.io-client';
+import { Router } from '@angular/router';
 import { SocketService } from '../socket.service';
 import {
   Lobby,
@@ -17,11 +18,19 @@ export class LobbyService {
   joinLobbySubject = new Subject<any>();
   lobbySubject = new Subject<Lobby>();
   lobbyJoinSubect = new Subject<any>();
+  lobbyKickedSubject = new Subject<any>();
 
   private socket!: Socket;
 
-  constructor(private socketService: SocketService) {
+  constructor(private socketService: SocketService, private router: Router) {
     this.socket = this.socketService.getSocket();
+
+    // Listen for kicked event
+    this.socket.on('lobby:kicked', (data) => {
+      this.lobbyKickedSubject.next(data);
+      // Redirect to home when kicked
+      this.router.navigate(['/']);
+    });
   }
 
   public joinLobby(username: string, lobbyCode?: string) {
@@ -50,4 +59,12 @@ export class LobbyService {
     });
     return this.lobbyJoinSubect;
   };
+
+  public kickUser(lobbyCode: string, userSocketId: string) {
+    this.socket.emit('lobby:kick', lobbyCode, userSocketId);
+  }
+
+  public getKickNotifications() {
+    return this.lobbyKickedSubject.asObservable();
+  }
 }

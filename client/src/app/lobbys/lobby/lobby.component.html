@@ -1,11 +1,11 @@
 <div class="page-container">
   <div class="header">
-    <h1>LOBBY VON <span class="highlight">MODERATOR</span></h1>
+    <h1>LOBBY VON <span class="highlight"></span></h1>
   </div>
 
   <div class="lobby-container">
     <div class="left-panel">
-      <app-interactive-user-panel></app-interactive-user-panel>
+      <app-interactive-user-panel [lobby]="lobby"></app-interactive-user-panel>
       <app-get-lobby-code></app-get-lobby-code>
     </div>
 
