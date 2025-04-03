@@ -16,31 +16,42 @@ var users = [];
 // lobbycode, moderator, users[], isActive, currentBuzzerState, points, event history
 var lobbys = [];
 
-var tokenUser = {
-  username: "",
-  verified: false,
-};
-
 const SECRET_KEY = "your-secret-key";
 
 io.use((socket, next) => {
   const token = socket.handshake.auth.token;
+  console.log("Token:", token);
 
-  if (token) {
+  // Initialize auth data on socket object
+  socket.auth = {
+    username: "",
+    verified: false,
+  };
+
+  // More robust check for valid token
+  if (
+    token &&
+    typeof token === "string" &&
+    token.trim().length > 0 &&
+    token !== "undefined" &&
+    token !== "null"
+  ) {
+    console.log("Token accepted: ", token);
     jwt.verify(token, SECRET_KEY, (err, decoded) => {
       if (err) {
         console.error("Invalid token:", err);
         return next(new Error("Authentication error"));
       } else {
         console.log("Token verified. User:", decoded.username);
-        tokenUser.username = decoded.username;
-        tokenUser.verified = true;
-        //updateSocketIdForUserFromJwt(socket, decoded.username);
+        // Store auth data on socket instead of global variable
+        socket.auth.username = decoded.username;
+        socket.auth.verified = true;
+        socket.username = decoded.username; // Keep this for compatibility
         return next();
       }
     });
   } else {
-    console.error("No token provided");
+    console.error("No valid token provided:", token);
     return next();
   }
 });
@@ -48,32 +59,7 @@ io.use((socket, next) => {
 io.on("connection", (socket) => {
   console.log("a user connected");
 
-  //   lobby zum 1. mal betreten (lobby join)
-  // (username prüfen)
-  // überprüfen, ob lobbycode gültig
-
-  // einer bestehenden Lobby beitreten (lobby join)
-  // (username prüfen)
-  // überprüfen, ob lobbycode gültig
-
-  // lobby neuladen
-
-  // send the current state of the lobby (buzzer) to a new user / to a reconnecting user
-  // lobbycode required
-
-  // TODO: get username from client-cookie and search for the user in the users-array
-  // if the user has a matching lobbycode, redirect him to the lobby
-
-  // const currentState = buzzerState.find(
-  //   ({ lobbycode }) => lobbycode === "ASDCF"
-  // );
-  // if (currentState) {
-  //   io.to(socket.id).emit(currentState.action, currentState.socketId);
-  // }
-
   socket.on("message", (message) => {
-    //emitMessage(lobbyCode, "message", message);
-    // TODO: send message to curernt lobby
     io.emit("message", `${socket.id.substr(0, 2)}: ${message}`);
   });
 
@@ -83,6 +69,20 @@ io.on("connection", (socket) => {
 
     if (validUsername) {
       var token = jwt.sign({ username: username }, SECRET_KEY);
+
+      jwt.verify(token, SECRET_KEY, (err, decoded) => {
+        if (err) {
+          console.error("Invalid token:", err);
+        } else {
+          console.log("Token verified. User:", decoded.username);
+          // Store auth data on socket instead of global variable
+          socket.auth.username = decoded.username;
+          socket.auth.verified = true;
+          socket.username = decoded.username; // Keep this for compatibility
+        }
+      });
+
+      console.log("lobby:join token signed: ", token);
       lobbyCode = handleLobby(lobbyCode, username, callback);
 
       if (lobbyCode) {
@@ -94,14 +94,16 @@ io.on("connection", (socket) => {
 
   socket.on("lobby:get", (lobbyCode, callback) => {
     console.log("lobby:get");
-    console.log(socket.username);
+    console.log("socket.auth:", socket.auth);
+    console.log("socket username:", socket.username);
     var isLobbyCodeValid = lobbys.some(
       (lobby) => lobby.lobbyCode === lobbyCode
     );
 
     if (isLobbyCodeValid) {
-      updateSocketIdForUserFromJwt(lobbyCode);
-      var result = getLobby(lobbyCode, socket.username);
+      console.log("lobby:get lobby found", lobbyCode, socket.username);
+      updateSocketIdForUserFromJwt(lobbyCode, socket);
+      var result = getLobby(lobbyCode, socket.username, socket);
       generateLobbyEnterLeaveEvent(lobbyCode, socket.username, "joined");
       callback(result);
     } else {
@@ -114,13 +116,11 @@ io.on("connection", (socket) => {
     buzzerStateChanged("buzzer:pressed", lobbyCode);
   });
 
-  // TODO: check if lobby-moderator
   socket.on("buzzer:reset", (lobbyCode) => {
     buzzerStateChanged("buzzer:reset", lobbyCode);
   });
 
   socket.on("buzzer:locked", (lobbyCode) => {
-    // Check if user is moderator before allowing lock
     var foundUser = findUserBySocketId(socket.id);
     if (foundUser) {
       const lobby = lobbys.find((lobby) => lobby.lobbyCode === lobbyCode);
@@ -133,14 +133,12 @@ io.on("connection", (socket) => {
   socket.on("lobby:kick", (lobbyCode, userSocketId) => {
     console.log("lobby:kick", lobbyCode, userSocketId);
 
-    // Check if requester is a valid user
     const requestingUser = findUserBySocketId(socket.id);
     if (!requestingUser) {
       console.log("User not found for socket ID:", socket.id);
       return;
     }
 
-    // Find the lobby
     const lobbyIndex = lobbys.findIndex(
       (lobby) => lobby.lobbyCode === lobbyCode
     );
@@ -151,13 +149,11 @@ io.on("connection", (socket) => {
 
     const lobby = lobbys[lobbyIndex];
 
-    // Check if requester is the moderator
     if (lobby.moderator.username !== requestingUser.username) {
       console.log("User is not moderator:", requestingUser.username);
       return;
     }
 
-    // Find the user to kick
     const userToKickIndex = lobby.users.findIndex(
       (user) => user.socketId === userSocketId
     );
@@ -168,10 +164,8 @@ io.on("connection", (socket) => {
 
     const userToKick = lobby.users[userToKickIndex];
 
-    // Remove user from lobby
     lobby.users.splice(userToKickIndex, 1);
 
-    // Add event to history
     addEventToLobbyEventHistory(
       lobbyCode,
       "lobby:user:kicked",
@@ -179,15 +173,12 @@ io.on("connection", (socket) => {
       { kickedBy: requestingUser.username }
     );
 
-    // Notify the kicked user
     io.to(userSocketId).emit("lobby:kicked", {
       message: "You have been kicked from the lobby",
     });
 
-    // Notify the lobby
     emitMessage(lobbyCode, "lobby:user:kicked", userToKick.username);
 
-    // Remove the lobby reference from user's list
     removeUserLobbyReference(userToKick.username, lobbyCode);
   });
 
@@ -232,14 +223,10 @@ io.on("connection", (socket) => {
   }
 
   function handleLobby(lobbyCode, username, callback) {
-    // if the lobby code is empty, a new lobby code is generated and the user joins the lobby
-    // if the lobby code is not empty, check if the lobby code exists
-    // if the lobby code exists, the user joins the lobby
     if (lobbyCode) {
       console.log("handleLobby lobbycode", lobbyCode, username);
       if (lobbys.some((lobby) => lobby.lobbyCode === lobbyCode)) {
         console.log("handleLobby lobby found", lobbyCode, username);
-        // TODO: check if lobby is closed/full
         addUser(lobbyCode, username);
         addUserToLobby(lobbyCode, username);
         socket.join(lobbyCode);
@@ -249,7 +236,7 @@ io.on("connection", (socket) => {
         return null;
       }
     } else {
-      console.log("handleLobby new code", lobbyCode, username);
+      console.log("handleLobby new code ->", lobbyCode, username);
       lobbyCode = generateLobbyCode();
 
       currentBuzzerState = { action: "", socketId: "", username: "", data: "" };
@@ -278,6 +265,7 @@ io.on("connection", (socket) => {
     console.log("addUser", username, lobbys);
 
     const userIndex = users.findIndex((user) => user.username === username);
+    console.log("addUser - userIndex:", userIndex);
 
     if (userIndex != -1) {
       users[userIndex].lobbys.push({
@@ -354,22 +342,25 @@ io.on("connection", (socket) => {
     }
   }
 
-  function getLobby(lobbyCode, username) {
+  function getLobby(lobbyCode, username, socket) {
     var user = users.find((user) => user.username === username);
-    console.log("user", user);
-    console.log("username", username);
-    if (user.lobbys) {
+    console.log("getlobby - users", users);
+    console.log("getlobby - user", user);
+    console.log("getlobby - username", username);
+
+    if (!socket.auth.verified) {
+      return { error: "Authentication required" };
+    }
+
+    if (user && user.lobbys) {
       if (user.lobbys.some((lobby) => lobby.lobbyCode === lobbyCode)) {
         socket.join(lobbyCode);
         sendCurrentBuzzerState(lobbyCode);
 
-        // Get the lobby
         const lobby = lobbys.find((lobby) => lobby.lobbyCode === lobbyCode);
 
-        // Check if the user is the moderator
         const isModerator = lobby.moderator.username === username;
 
-        // Add moderator status to the response
         return { ...lobby, isModerator };
       }
     }
@@ -409,13 +400,17 @@ io.on("connection", (socket) => {
     }
   }
 
-  function updateSocketIdForUserFromJwt(lobbyCode) {
-    if (tokenUser.verified) {
-      socket.username = tokenUser.username;
+  function updateSocketIdForUserFromJwt(lobbyCode, socket) {
+    console.log("updateSocketId auth:", socket.auth);
+    if (socket.auth.verified) {
       console.log("update users: ", users);
-      if (users.find((user) => user.username === tokenUser.username)) {
+      console.log("auth username: ", socket.auth.username);
+      console.log("socket.username: ", socket.username);
+
+      if (users.find((user) => user.username === socket.auth.username)) {
+        console.log("user found: ");
         const userIndex = users.findIndex(
-          (user) => user.username === tokenUser.username
+          (user) => user.username === socket.auth.username
         );
 
         if (userIndex != -1) {

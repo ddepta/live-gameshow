@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Subject } from 'rxjs';
+import { Subject, Observable } from 'rxjs';
 import { Socket, io } from 'socket.io-client';
 import { Router } from '@angular/router';
 import { SocketService } from '../socket.service';
@@ -64,7 +64,7 @@ export class LobbyService {
     this.socket.emit('lobby:kick', lobbyCode, userSocketId);
   }
 
-  public getKickNotifications() {
+  public getKickNotifications(): Observable<any> {
     return this.lobbyKickedSubject.asObservable();
   }
 }

@@ -31,7 +31,8 @@ export class JoinLobbyComponent implements OnInit {
       .joinLobby(this.username, this.lobbyCode)
       .subscribe((result: any) => {
         console.log('join lobby result: ', result);
-        if (result !== 'error') {
+        if (!result.error) {
+          console.log('no error: ', result);
           localStorage.setItem('jwt_token', result.token);
           localStorage.setItem('username', result.username);
           this.router.navigate(['/lobby', result.lobbyCode]);

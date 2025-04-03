@@ -7,7 +7,6 @@ import { ChatComponent } from '../chat/chat.component';
 import { GamePreviewComponent } from '../game-preview/game-preview.component';
 import { InteractiveUserPanelComponent } from '../interactive-user-panel/interactive-user-panel.component';
 import { GetLobbyCodeComponent } from '../get-lobby-code/get-lobby-code.component';
-// import { Event, Lobby } from 'src/app/types';
 
 @Component({
   selector: 'app-lobby',
@@ -34,20 +33,31 @@ export class LobbyComponent {
 
   ngOnInit(): void {
     console.log('lobby init');
-    // this.lobbyCode = this.route.snapshot.paramMap.get('id') ?? '';
     this.route.params.subscribe((params: Params) => {
       this.lobbyCode = params['lobbyCode'];
-      this.lobbyService.getLobby(this.lobbyCode).subscribe((result: Lobby) => {
-        if (!result || Object.keys(result).length === 0) {
+      this.lobbyService.getLobby(this.lobbyCode).subscribe((result: any) => {
+        console.log('lobby result:', result);
+        // Handle error case when lobby doesn't exist
+        if (result.error || !result || Object.keys(result).length === 0) {
+          console.error(
+            'Lobby not found or error:',
+            result.error || 'Empty response'
+          );
+          // Redirect to home page
           this.router.navigate(['/']);
-        } else {
-          this.lobby = result;
-          this.eventHistory = result.eventHistory ?? [];
+          return;
         }
 
-        console.log('result: ', result);
+        // Valid lobby found
+        this.lobby = result;
+        this.eventHistory = result.eventHistory ?? [];
+        console.log('Lobby loaded:', result);
       });
-      console.log(params);
+    });
+
+    // Listen for kicked events
+    this.lobbyService.getKickNotifications().subscribe(() => {
+      // No need to handle here as the service already redirects
     });
   }
 }
