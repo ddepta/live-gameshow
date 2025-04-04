@@ -19,6 +19,7 @@ export interface User {
 
 // moderator, users, if active, points, buzzer history
 export interface Lobby {
+  error: any;
   lobbyCode: string;
   moderator: User;
   users?: User[];

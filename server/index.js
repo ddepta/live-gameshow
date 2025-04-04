@@ -18,9 +18,55 @@ var lobbys = [];
 
 const SECRET_KEY = "your-secret-key";
 
+// Add this helper function outside the socket connection for token verification
+function verifyAndProcessToken(socket, token) {
+  // Initialize result object
+  let result = {
+    success: false,
+    username: "",
+  };
+
+  // Check if token is valid string
+  if (
+    !(
+      token &&
+      typeof token === "string" &&
+      token.trim().length > 0 &&
+      token !== "undefined" &&
+      token !== "null"
+    )
+  ) {
+    console.log("Invalid token format:", token);
+    return result;
+  }
+
+  try {
+    // Synchronous verification to make this function simpler to use
+    const decoded = jwt.verify(token, SECRET_KEY);
+
+    if (decoded && decoded.username) {
+      // Store auth data on socket
+      socket.auth = socket.auth || {}; // Create auth object if it doesn't exist
+      socket.auth.username = decoded.username;
+      socket.auth.verified = true;
+      socket.username = decoded.username; // For backward compatibility
+
+      console.log("Token successfully verified for:", decoded.username);
+
+      result.success = true;
+      result.username = decoded.username;
+      return result;
+    }
+  } catch (err) {
+    console.error("Token verification failed:", err.message);
+  }
+
+  return result;
+}
+
 io.use((socket, next) => {
   const token = socket.handshake.auth.token;
-  console.log("Token:", token);
+  console.log("Connection token:", token);
 
   // Initialize auth data on socket object
   socket.auth = {
@@ -28,32 +74,16 @@ io.use((socket, next) => {
     verified: false,
   };
 
-  // More robust check for valid token
-  if (
-    token &&
-    typeof token === "string" &&
-    token.trim().length > 0 &&
-    token !== "undefined" &&
-    token !== "null"
-  ) {
-    console.log("Token accepted: ", token);
-    jwt.verify(token, SECRET_KEY, (err, decoded) => {
-      if (err) {
-        console.error("Invalid token:", err);
-        return next(new Error("Authentication error"));
-      } else {
-        console.log("Token verified. User:", decoded.username);
-        // Store auth data on socket instead of global variable
-        socket.auth.username = decoded.username;
-        socket.auth.verified = true;
-        socket.username = decoded.username; // Keep this for compatibility
-        return next();
-      }
-    });
-  } else {
-    console.error("No valid token provided:", token);
-    return next();
+  if (token) {
+    // Use the new helper function
+    const verification = verifyAndProcessToken(socket, token);
+    if (verification.success) {
+      return next();
+    }
   }
+
+  console.error("No valid token provided or verification failed");
+  return next(); // Allow connection, but with unverified status
 });
 
 io.on("connection", (socket) => {
@@ -70,17 +100,8 @@ io.on("connection", (socket) => {
     if (validUsername) {
       var token = jwt.sign({ username: username }, SECRET_KEY);
 
-      jwt.verify(token, SECRET_KEY, (err, decoded) => {
-        if (err) {
-          console.error("Invalid token:", err);
-        } else {
-          console.log("Token verified. User:", decoded.username);
-          // Store auth data on socket instead of global variable
-          socket.auth.username = decoded.username;
-          socket.auth.verified = true;
-          socket.username = decoded.username; // Keep this for compatibility
-        }
-      });
+      // Use the helper function for consistent verification
+      verifyAndProcessToken(socket, token);
 
       console.log("lobby:join token signed: ", token);
       lobbyCode = handleLobby(lobbyCode, username, callback);
@@ -93,22 +114,51 @@ io.on("connection", (socket) => {
   });
 
   socket.on("lobby:get", (lobbyCode, callback) => {
-    console.log("lobby:get");
-    console.log("socket.auth:", socket.auth);
-    console.log("socket username:", socket.username);
+    console.log("lobby:get for lobby:", lobbyCode);
+
+    // First, verify the current token again to ensure auth data is updated
+    const token = socket.handshake.auth.token;
+    if (token) {
+      verifyAndProcessToken(socket, token);
+    }
+
+    console.log("Socket auth status after verification:", socket.auth);
+
+    // Check if the lobby exists
     var isLobbyCodeValid = lobbys.some(
       (lobby) => lobby.lobbyCode === lobbyCode
     );
 
-    if (isLobbyCodeValid) {
-      console.log("lobby:get lobby found", lobbyCode, socket.username);
-      updateSocketIdForUserFromJwt(lobbyCode, socket);
-      var result = getLobby(lobbyCode, socket.username, socket);
-      generateLobbyEnterLeaveEvent(lobbyCode, socket.username, "joined");
-      callback(result);
-    } else {
+    if (!isLobbyCodeValid) {
+      console.log("Invalid lobby code:", lobbyCode);
       callback({ error: "Invalid Lobby Code" });
+      return;
     }
+
+    // Make sure user is authenticated
+    if (!socket.auth || !socket.auth.verified) {
+      console.log("User not authenticated, denying access");
+      callback({ error: "Authentication required" });
+      return;
+    }
+
+    console.log("lobby:get lobby found", lobbyCode, socket.auth.username);
+    const wasReconnect = updateSocketIdForUserFromJwt(lobbyCode, socket);
+    var result = getLobby(lobbyCode, socket.auth.username, socket);
+
+    if (!result.error) {
+      // Only generate join event if this was a reconnection
+      if (wasReconnect) {
+        generateLobbyEnterLeaveEvent(lobbyCode, socket.auth.username, "joined");
+        emitMessage(
+          lobbyCode,
+          "lobby:joined",
+          socket.auth.username + " reconnected"
+        );
+      }
+    }
+
+    callback(result);
   });
 
   socket.on("buzzer:pressed", (lobbyCode) => {
@@ -185,12 +235,33 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     var simplifiedUser = findSimplifiedUserBySocketId(socket.id);
     if (simplifiedUser) {
+      // Add event to history
       addEventToLobbyEventHistory(
         simplifiedUser.lobbyCode,
         "lobby:user:left",
         simplifiedUser.username,
         ""
       );
+
+      // Notify all clients in the lobby
+      emitMessage(
+        simplifiedUser.lobbyCode,
+        "lobby:user:left",
+        simplifiedUser.username
+      );
+
+      // Also remove the user from the lobby's users array
+      const lobbyIndex = lobbys.findIndex(
+        (lobby) => lobby.lobbyCode === simplifiedUser.lobbyCode
+      );
+      if (lobbyIndex !== -1) {
+        const userIndex = lobbys[lobbyIndex].users.findIndex(
+          (user) => user.socketId === socket.id
+        );
+        if (userIndex !== -1) {
+          lobbys[lobbyIndex].users.splice(userIndex, 1);
+        }
+      }
     }
     console.log("a user disconnected!");
   });
@@ -343,29 +414,34 @@ io.on("connection", (socket) => {
   }
 
   function getLobby(lobbyCode, username, socket) {
-    var user = users.find((user) => user.username === username);
-    console.log("getlobby - users", users);
-    console.log("getlobby - user", user);
-    console.log("getlobby - username", username);
-
     if (!socket.auth.verified) {
+      console.log("getLobby: User not authenticated");
       return { error: "Authentication required" };
     }
 
-    if (user && user.lobbys) {
-      if (user.lobbys.some((lobby) => lobby.lobbyCode === lobbyCode)) {
-        socket.join(lobbyCode);
-        sendCurrentBuzzerState(lobbyCode);
+    var user = users.find((user) => user.username === username);
+    console.log("getlobby - username:", username);
 
-        const lobby = lobbys.find((lobby) => lobby.lobbyCode === lobbyCode);
-
-        const isModerator = lobby.moderator.username === username;
-
-        return { ...lobby, isModerator };
-      }
+    // Check if the user exists and has lobbies
+    if (!user || !user.lobbys) {
+      console.log("User not found or has no lobbies");
+      return { error: "User not found in lobby" };
     }
 
-    return { error: "No access to lobby" };
+    // Check if user has access to this specific lobby
+    if (!user.lobbys.some((lobby) => lobby.lobbyCode === lobbyCode)) {
+      console.log("User has no access to this lobby");
+      return { error: "No access to lobby" };
+    }
+
+    // User has access - continue
+    socket.join(lobbyCode);
+    sendCurrentBuzzerState(lobbyCode);
+
+    const lobby = lobbys.find((lobby) => lobby.lobbyCode === lobbyCode);
+    const isModerator = lobby.moderator.username === username;
+
+    return { ...lobby, isModerator };
   }
 
   function emitMessage(recipient, event, data) {
@@ -401,29 +477,53 @@ io.on("connection", (socket) => {
   }
 
   function updateSocketIdForUserFromJwt(lobbyCode, socket) {
-    console.log("updateSocketId auth:", socket.auth);
-    if (socket.auth.verified) {
-      console.log("update users: ", users);
-      console.log("auth username: ", socket.auth.username);
-      console.log("socket.username: ", socket.username);
-
-      if (users.find((user) => user.username === socket.auth.username)) {
-        console.log("user found: ");
-        const userIndex = users.findIndex(
-          (user) => user.username === socket.auth.username
-        );
-
-        if (userIndex != -1) {
-          console.log("updateSocket", users[userIndex]);
-          var lobbyIndex = users[userIndex].lobbys.findIndex(
-            (lobby) => lobby.lobbyCode === lobbyCode
-          );
-          if (lobbyIndex != -1) {
-            users[userIndex].lobbys[lobbyIndex].socketId = socket.id;
-          }
-        }
-      }
+    if (!socket.auth.verified) {
+      console.log("updateSocketId: User not verified");
+      return false;
     }
+
+    const username = socket.auth.username;
+    const user = users.find((user) => user.username === username);
+    let wasReconnect = false;
+
+    if (!user) {
+      console.log("User not found:", username);
+      // Handle reconnecting user who doesn't exist in users array
+      addUser(lobbyCode, username);
+      addUserToLobby(lobbyCode, username);
+      socket.join(lobbyCode);
+      sendCurrentBuzzerState(lobbyCode);
+      wasReconnect = true;
+      return wasReconnect;
+    }
+
+    const lobbyIndex = user.lobbys.findIndex(
+      (lobby) => lobby.lobbyCode === lobbyCode
+    );
+
+    if (lobbyIndex !== -1) {
+      // Check if the socket ID has changed (indicating reconnect)
+      const oldSocketId = user.lobbys[lobbyIndex].socketId;
+      wasReconnect = oldSocketId !== socket.id;
+
+      // Update socket ID
+      user.lobbys[lobbyIndex].socketId = socket.id;
+      console.log(
+        `Updated socket ID for user ${username} from ${oldSocketId} to ${socket.id}, wasReconnect: ${wasReconnect}`
+      );
+
+      // Make sure user is in the socket.io room
+      socket.join(lobbyCode);
+    } else {
+      console.log(`User ${username} has no access to lobby ${lobbyCode}`);
+      // User has auth but no lobby record - add them
+      addUser(lobbyCode, username);
+      addUserToLobby(lobbyCode, username);
+      socket.join(lobbyCode);
+      wasReconnect = true;
+    }
+
+    return wasReconnect;
   }
 });
 
