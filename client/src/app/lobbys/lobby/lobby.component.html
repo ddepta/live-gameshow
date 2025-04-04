@@ -3,7 +3,7 @@
     <h1>
       LOBBY VON
       <span class="highlight">{{
-        lobby.moderator.username.toUpperCase()
+        lobby?.moderator?.username?.toUpperCase()
       }}</span>
     </h1>
   </div>
@@ -18,11 +18,19 @@
       <div class="game-preview-wrapper">
         <app-game-preview></app-game-preview>
       </div>
+
+      <!-- Only show start game button for moderator -->
+      <div class="game-actions" *ngIf="lobby.isModerator">
+        <button class="start-game-btn" (click)="startGame()">
+          SPIEL STARTEN
+        </button>
+      </div>
+
       <h3 class="center">TESTBUZZER</h3>
       <div class="buzzer-wrapper">
         <app-buzzer
           [lobbyCode]="lobbyCode"
-          [isModerator]="lobby.isModerator"
+          [isModerator]="lobby?.isModerator"
         ></app-buzzer>
       </div>
     </div>

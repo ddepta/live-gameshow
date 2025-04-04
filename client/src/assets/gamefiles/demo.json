@@ -1,0 +1,71 @@
+{
+  "gameData": {
+    "title": "Das Grosse Wissens-Duell",
+    "description": "Willkommen zum Grossen Wissens-Duell! Teste dein Wissen in verschiedenen Fragetypen. Zeige deine Schnelligkeit bei Buzzer-Fragen, beweise dein Schätzvermögen und meistere knifflige Multiple-Choice-Fragen. Nur die klügsten Köpfe werden siegen!",
+    "questions": [
+      {
+        "id": "q001",
+        "type": "buzzer",
+        "question": "Wie heißt die Hauptstadt von Australien?",
+        "correctAnswer": "Canberra"
+      },
+      {
+        "id": "q002",
+        "type": "multipleChoice",
+        "question": "Welcher Ozean ist der größte der Welt?",
+        "options": [
+          "Atlantischer Ozean",
+          "Indischer Ozean",
+          "Pazifischer Ozean",
+          "Arktischer Ozean"
+        ],
+        "correctAnswer": "Pazifischer Ozean"
+      },
+      {
+        "id": "q003",
+        "type": "estimation",
+        "question": "Wie viele Kilometer beträgt der Umfang der Erde am Äquator ungefähr?",
+        "correctAnswer": 40075
+      },
+      {
+        "id": "q004",
+        "type": "buzzer",
+        "question": "Welches chemische Element hat das Symbol 'Fe'?",
+        "correctAnswer": "Eisen"
+      },
+      {
+        "id": "q005",
+        "type": "multipleChoice",
+        "question": "In welchem Jahr fiel die Berliner Mauer?",
+        "options": ["1987", "1989", "1991", "1993"],
+        "correctAnswer": "1989"
+      },
+      {
+        "id": "q006",
+        "type": "buzzer",
+        "question": "Wer malte die Mona Lisa?",
+        "correctAnswer": "Leonardo da Vinci"
+      },
+      {
+        "id": "q007",
+        "type": "estimation",
+        "question": "Wie viele Tasten hat ein Standard-Klavier?",
+        "correctAnswer": 88
+      },
+      {
+        "id": "q008",
+        "type": "multipleChoice",
+        "question": "Welches Land ist bekannt für seine Fjorde?",
+        "options": ["Schweden", "Finnland", "Dänemark", "Norwegen"],
+        "correctAnswer": "Norwegen"
+      },
+      {
+        "id": "q009",
+        "type": "multipleChoice",
+        "question": "Was ist die Quadratwurzel aus 144?",
+        "options": ["10", "12", "14", "16"],
+        "correctAnswer": "12"
+      }
+    ]
+  }
+}

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { LobbyService } from '../lobby.service';
 import { Lobby, EventHistory } from '../../types';
@@ -7,20 +7,27 @@ import { ChatComponent } from '../chat/chat.component';
 import { GamePreviewComponent } from '../game-preview/game-preview.component';
 import { InteractiveUserPanelComponent } from '../interactive-user-panel/interactive-user-panel.component';
 import { GetLobbyCodeComponent } from '../get-lobby-code/get-lobby-code.component';
+import { GameService } from '../../game.service';
+import { CommonModule } from '@angular/common';
+import { HttpClientModule } from '@angular/common/http';
 
 @Component({
   selector: 'app-lobby',
-  templateUrl: './lobby.component.html',
-  styleUrls: ['./lobby.component.scss'],
+  standalone: true,
   imports: [
+    CommonModule,
+    HttpClientModule,
     BuzzerComponent,
     ChatComponent,
     GamePreviewComponent,
     InteractiveUserPanelComponent,
     GetLobbyCodeComponent,
   ],
+  providers: [GameService],
+  templateUrl: './lobby.component.html',
+  styleUrls: ['./lobby.component.scss'],
 })
-export class LobbyComponent {
+export class LobbyComponent implements OnInit {
   lobbyCode!: string;
   lobby!: Lobby;
   eventHistory: EventHistory[] = [];
@@ -28,7 +35,8 @@ export class LobbyComponent {
   constructor(
     private router: Router,
     private route: ActivatedRoute,
-    private lobbyService: LobbyService
+    private lobbyService: LobbyService,
+    private gameService: GameService
   ) {}
 
   ngOnInit(): void {
@@ -59,5 +67,14 @@ export class LobbyComponent {
     this.lobbyService.getKickNotifications().subscribe(() => {
       // No need to handle here as the service already redirects
     });
+  }
+
+  startGame(): void {
+    if (this.lobby.isModerator) {
+      // Navigate to the game page with the lobby code
+      this.router.navigate(['/game', this.lobbyCode]);
+    } else {
+      console.log('Only the moderator can start the game.');
+    }
   }
 }

@@ -1,57 +1,21 @@
 <div class="game-preview-container">
-  <h1 class="game-title">ALLGEMEINWISSEN</h1>
-  <div class="game-content">
+  <!-- Game data display -->
+  <div class="game-info" *ngIf="gameData">
+    <h2 class="game-title">{{ gameData.title }}</h2>
     <div class="game-description">
-      <p>
-        Dies ist die Beschreibung für Spiel 1. Hier werden alle Details zum
-        Spiel erklärt... Lorem ipsum dolor sit amet, consectetur adipiscing
-        elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-        Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi
-        ut aliquip ex ea commodo consequat. Duis aute irure dolor in
-        reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-        pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa
-        qui officia deserunt mollit anim id est laborum.
-      </p>
-      <p>
-        Dies ist die Beschreibung für Spiel 1. Hier werden alle Details zum
-        Spiel erklärt... Lorem ipsum dolor sit amet, consectetur adipiscing
-        elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-        Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi
-        ut aliquip ex ea commodo consequat. Duis aute irure dolor in
-        reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-        pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa
-        qui officia deserunt mollit anim id est laborum.
-      </p>
-      <p>
-        Dies ist die Beschreibung für Spiel 1. Hier werden alle Details zum
-        Spiel erklärt... Lorem ipsum dolor sit amet, consectetur adipiscing
-        elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-        Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi
-        ut aliquip ex ea commodo consequat. Duis aute irure dolor in
-        reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-        pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa
-        qui officia deserunt mollit anim id est laborum.
-      </p>
-      <p>
-        Dies ist die Beschreibung für Spiel 1. Hier werden alle Details zum
-        Spiel erklärt... Lorem ipsum dolor sit amet, consectetur adipiscing
-        elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-        Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi
-        ut aliquip ex ea commodo consequat. Duis aute irure dolor in
-        reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-        pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa
-        qui officia deserunt mollit anim id est laborum.
-      </p>
-      <p>
-        Dies ist die Beschreibung für Spiel 1. Hier werden alle Details zum
-        Spiel erklärt... Lorem ipsum dolor sit amet, consectetur adipiscing
-        elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-        Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi
-        ut aliquip ex ea commodo consequat. Duis aute irure dolor in
-        reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-        pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa
-        qui officia deserunt mollit anim id est laborum.
-      </p>
+      <p>{{ gameData.description }}</p>
     </div>
+
+    <div class="questions-info">
+      <p class="questions-count">{{ gameData.questions.length }} Fragen</p>
+    </div>
+  </div>
+
+  <div class="loading-info" *ngIf="isLoading">
+    <p>Spieldaten werden geladen...</p>
+  </div>
+
+  <div class="error-info" *ngIf="errorLoading">
+    <p>Fehler beim Laden der Spieldaten!</p>
   </div>
 </div>

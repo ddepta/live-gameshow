@@ -9,6 +9,7 @@
   overflow: hidden;
   background-color: var(--p-surface-card);
   max-height: calc(66vh - 100px); // Limit maximum height
+  padding: 0;
 }
 
 .game-title {
@@ -17,6 +18,11 @@
   padding: 15px 0;
   font-weight: bold;
   border-bottom: 1px solid var(--p-primary-color);
+  color: var(--p-primary-color);
+  font-size: 28px;
+  margin-top: 0;
+  margin-bottom: 20px;
+  text-transform: uppercase;
 }
 
 .game-content {
@@ -31,8 +37,64 @@
   font-size: 1.1rem;
   line-height: 1.4;
   padding: 15px 0;
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 20px;
 
   p {
     margin-top: 0;
+    line-height: 1.6;
+    font-size: 16px;
+    text-align: justify;
   }
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--p-primary-color);
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+.game-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+}
+
+.questions-info {
+  text-align: center;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid rgba(var(--p-primary-rgb), 0.2);
+}
+
+.questions-count {
+  font-weight: bold;
+  font-size: 16px;
+  color: var(--p-primary-color);
+}
+
+.loading-info,
+.error-info {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+
+  p {
+    text-align: center;
+    font-size: 16px;
+  }
+}
+
+.error-info p {
+  color: var(--p-error-color, red);
 }
