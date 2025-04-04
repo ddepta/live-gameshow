@@ -35,3 +35,10 @@ export interface JoinLobbyResponse {
   username: string;
   error?: string;
 }
+
+// New interface for the user list updates
+export interface UserListUpdate {
+  lobbyCode: string;
+  users: User[];
+  moderator: User;
+}

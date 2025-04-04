@@ -109,6 +109,7 @@ io.on("connection", (socket) => {
       if (lobbyCode) {
         callback({ lobbyCode: lobbyCode, token: token, username: username });
         emitMessage(lobbyCode, "lobby:joined", username + " joined the lobby");
+        emitUserList(lobbyCode); // Emit user list on join
       }
     }
   });
@@ -155,6 +156,7 @@ io.on("connection", (socket) => {
           "lobby:joined",
           socket.auth.username + " reconnected"
         );
+        emitUserList(lobbyCode); // Emit user list on reconnect
       }
     }
 
@@ -228,6 +230,7 @@ io.on("connection", (socket) => {
     });
 
     emitMessage(lobbyCode, "lobby:user:kicked", userToKick.username);
+    emitUserList(lobbyCode); // Emit user list after kick
 
     removeUserLobbyReference(userToKick.username, lobbyCode);
   });
@@ -260,6 +263,7 @@ io.on("connection", (socket) => {
         );
         if (userIndex !== -1) {
           lobbys[lobbyIndex].users.splice(userIndex, 1);
+          emitUserList(simplifiedUser.lobbyCode); // Emit user list on disconnect
         }
       }
     }
@@ -365,6 +369,7 @@ io.on("connection", (socket) => {
       });
 
       addEventToLobbyEventHistory(lobbyCode, "lobby:user:joined", username, "");
+      emitUserList(lobbyCode); // Emit user list when user added to existing lobby
     }
   }
 
@@ -438,8 +443,17 @@ io.on("connection", (socket) => {
     socket.join(lobbyCode);
     sendCurrentBuzzerState(lobbyCode);
 
+    // Make sure all users are in the lobby (check for missing users)
+    ensureAllRegisteredUsersInLobby(lobbyCode);
+
     const lobby = lobbys.find((lobby) => lobby.lobbyCode === lobbyCode);
     const isModerator = lobby.moderator.username === username;
+
+    // Log current users in lobby for debugging
+    console.log(
+      `Current users in lobby ${lobbyCode}:`,
+      lobby.users.map((u) => u.username)
+    );
 
     return { ...lobby, isModerator };
   }
@@ -506,7 +520,7 @@ io.on("connection", (socket) => {
       const oldSocketId = user.lobbys[lobbyIndex].socketId;
       wasReconnect = oldSocketId !== socket.id;
 
-      // Update socket ID
+      // Update socket ID in user's lobbys array
       user.lobbys[lobbyIndex].socketId = socket.id;
       console.log(
         `Updated socket ID for user ${username} from ${oldSocketId} to ${socket.id}, wasReconnect: ${wasReconnect}`
@@ -514,6 +528,64 @@ io.on("connection", (socket) => {
 
       // Make sure user is in the socket.io room
       socket.join(lobbyCode);
+
+      // Get the lobby
+      const lobby = lobbys.find((lobby) => lobby.lobbyCode === lobbyCode);
+      if (lobby) {
+        // Log the current users in lobby before making changes
+        console.log(
+          `Current users in lobby before update:`,
+          lobby.users.map((u) => u.username)
+        );
+
+        // Check if this user is the moderator
+        const isModerator = lobby.moderator.username === username;
+
+        if (isModerator) {
+          console.log(
+            `User ${username} is the moderator, updating moderator socket ID`
+          );
+          // Update the moderator's socket ID
+          lobby.moderator.socketId = socket.id;
+
+          // Remove the moderator from users array if they were accidentally added before
+          const moderatorInUsersIndex = lobby.users.findIndex(
+            (u) => u.username === username
+          );
+          if (moderatorInUsersIndex !== -1) {
+            console.log(`Removing moderator ${username} from users array`);
+            lobby.users.splice(moderatorInUsersIndex, 1);
+          }
+        } else {
+          // Regular user handling
+          const userInLobby = lobby.users.find((u) => u.username === username);
+          if (!userInLobby) {
+            console.log(
+              `Re-adding user ${username} to lobby's users array on reconnect`
+            );
+            // User isn't in the lobby's users array, add them back
+            lobby.users.push({
+              socketId: socket.id,
+              username: username,
+            });
+          } else {
+            // User exists in lobby but needs socket ID updated
+            userInLobby.socketId = socket.id;
+            console.log(
+              `Updated socket ID for existing user ${username} in lobby`
+            );
+          }
+        }
+
+        // Ensure all registered users are present in the lobby
+        ensureAllRegisteredUsersInLobby(lobbyCode);
+
+        // Log the updated users list
+        console.log(
+          `Users in lobby after update:`,
+          lobby.users.map((u) => u.username)
+        );
+      }
     } else {
       console.log(`User ${username} has no access to lobby ${lobbyCode}`);
       // User has auth but no lobby record - add them
@@ -524,6 +596,78 @@ io.on("connection", (socket) => {
     }
 
     return wasReconnect;
+  }
+
+  // Function to ensure all registered users are in the lobby users array
+  function ensureAllRegisteredUsersInLobby(lobbyCode) {
+    const lobby = lobbys.find((lobby) => lobby.lobbyCode === lobbyCode);
+    if (!lobby) return;
+
+    // Get all users who should be in this lobby
+    const registeredUsers = users.filter((user) =>
+      user.lobbys.some((l) => l.lobbyCode === lobbyCode)
+    );
+
+    console.log(
+      `Ensuring ${registeredUsers.length} registered users are in lobby ${lobbyCode}`
+    );
+
+    // Make sure each registered user is in the lobby users array
+    registeredUsers.forEach((registeredUser) => {
+      const username = registeredUser.username;
+
+      // Skip the moderator - they should not be in the users array
+      if (lobby.moderator.username === username) {
+        console.log(
+          `Skipping moderator ${username} in ensureAllRegisteredUsersInLobby`
+        );
+        return;
+      }
+
+      const userSocketId = registeredUser.lobbys.find(
+        (l) => l.lobbyCode === lobbyCode
+      )?.socketId;
+
+      if (!userSocketId) return;
+
+      // Check if this user is already in the lobby's users array
+      const existsInLobby = lobby.users.some((u) => u.username === username);
+
+      // If not, add them
+      if (!existsInLobby) {
+        console.log(`Re-adding missing user ${username} to lobby ${lobbyCode}`);
+        lobby.users.push({
+          socketId: userSocketId,
+          username: username,
+        });
+      }
+    });
+  }
+
+  // New function to emit the current user list to all clients in a lobby
+  function emitUserList(lobbyCode) {
+    const lobby = lobbys.find((lobby) => lobby.lobbyCode === lobbyCode);
+    if (lobby) {
+      const userListPayload = {
+        lobbyCode: lobbyCode, // Include lobbyCode in the payload
+        users: lobby.users.map((user) => ({
+          socketId: user.socketId,
+          username: user.username,
+        })),
+        moderator: {
+          socketId: lobby.moderator.socketId,
+          username: lobby.moderator.username,
+        },
+      };
+
+      console.log(
+        `Emitting updated user list for lobby ${lobbyCode} with ${lobby.users.length} users:`,
+        userListPayload
+      );
+      io.to(lobbyCode).emit("lobby:userList", userListPayload);
+    } else {
+      console.log(`emitUserList: Lobby not found for code ${lobbyCode}`);
+    }
   }
 });
 

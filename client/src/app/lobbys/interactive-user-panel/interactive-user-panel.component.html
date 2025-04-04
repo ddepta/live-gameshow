@@ -2,18 +2,23 @@
   <h3 class="panel-title">TEILNEHMER</h3>
   <div class="users-list">
     <!-- Show moderator first -->
-    <div class="user-item moderator" *ngIf="moderator">
+    <div class="user-item moderator" *ngIf="displayedModerator">
       <ng-icon
         name="gameHammerDrop"
         size="20px"
         class="moderator-icon"
       ></ng-icon>
-      <span class="user-name">{{ moderator.username }} (Moderator)</span>
+      <span class="user-name"
+        >{{ displayedModerator.username }} (Moderator)</span
+      >
     </div>
-    <div class="divider" *ngIf="moderator && users.length > 0"></div>
+    <div
+      class="divider"
+      *ngIf="displayedModerator && displayedUsers.length > 0"
+    ></div>
 
     <!-- Show all other users -->
-    <ng-container *ngFor="let user of users; let last = last">
+    <ng-container *ngFor="let user of displayedUsers; let last = last">
       <div class="user-item">
         <span class="user-name">{{ user.username }}</span>
         <ng-icon
@@ -29,6 +34,11 @@
     </ng-container>
 
     <!-- Message when no users are present -->
-    <div class="no-users" *ngIf="!moderator && users.length === 0">LEER</div>
+    <div
+      class="no-users"
+      *ngIf="!displayedModerator && displayedUsers.length === 0"
+    >
+      LEER
+    </div>
   </div>
 </div>
