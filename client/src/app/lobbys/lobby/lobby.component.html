@@ -1,6 +1,11 @@
 <div class="page-container">
   <div class="header">
-    <h1>LOBBY VON <span class="highlight"></span></h1>
+    <h1>
+      LOBBY VON
+      <span class="highlight">{{
+        lobby.moderator.username.toUpperCase()
+      }}</span>
+    </h1>
   </div>
 
   <div class="lobby-container">
@@ -13,11 +18,11 @@
       <div class="game-preview-wrapper">
         <app-game-preview></app-game-preview>
       </div>
-
+      <h3 class="center">TESTBUZZER</h3>
       <div class="buzzer-wrapper">
         <app-buzzer
           [lobbyCode]="lobbyCode"
-          [isModerator]="lobby?.isModerator"
+          [isModerator]="lobby.isModerator"
         ></app-buzzer>
       </div>
     </div>

@@ -89,8 +89,28 @@ io.use((socket, next) => {
 io.on("connection", (socket) => {
   console.log("a user connected");
 
-  socket.on("message", (message) => {
-    io.emit("message", `${socket.id.substr(0, 2)}: ${message}`);
+  // Update message handler to send messages with separate username field
+  socket.on("message", (messageText) => {
+    // Find which lobby this user belongs to
+    const user = findSimplifiedUserBySocketId(socket.id);
+    if (user && user.lobbyCode) {
+      // Send message with separate username field
+      console.log(
+        `Chat message to lobby ${user.lobbyCode} from ${user.username}:`,
+        messageText
+      );
+      io.to(user.lobbyCode).emit("message", {
+        text: messageText,
+        username: user.username,
+      });
+    } else {
+      // Fallback if we can't determine the lobby
+      console.log("Message from user without lobby:", socket.id);
+      socket.emit("message", {
+        text: messageText,
+        username: "You",
+      });
+    }
   });
 
   socket.on("lobby:join", (lobbyCode, username, callback) => {
