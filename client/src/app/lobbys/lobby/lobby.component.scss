@@ -32,6 +32,59 @@ h1 {
   grid-template-areas: "left-panel center-area right-panel";
   gap: 20px;
   flex: 1;
+  overflow: hidden; /* Prevent overflow from child elements */
+}
+
+/* Replace center-area with flip-card */
+.flip-card {
+  grid-area: center-area;
+  background-color: transparent;
+  height: 100%;
+  perspective: 1000px; /* 3D effect */
+  min-width: 0; /* Allow grid item to shrink below min-content width */
+  max-width: 100%; /* Ensure it doesn't exceed the grid area */
+}
+
+/* This container positions the front and back sides */
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  transition: transform 0.4s;
+  transform-style: preserve-3d;
+}
+
+/* Do the flip when the is-flipped class is added */
+.flip-card.is-flipped .flip-card-inner {
+  transform: rotateY(180deg);
+}
+
+/* Position the front and back sides */
+.flip-card-front,
+.flip-card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  -webkit-backface-visibility: hidden; /* Safari */
+  backface-visibility: hidden;
+  overflow: auto; /* Allow scrolling for content that doesn't fit */
+}
+
+/* Style the front side */
+.flip-card-front {
+  background-color: transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Style the back side */
+.flip-card-back {
+  background-color: transparent;
+  transform: rotateY(180deg);
 }
 
 .left-panel {
@@ -41,54 +94,16 @@ h1 {
   justify-content: center;
 }
 
-.center-area {
-  grid-area: center-area;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  position: relative;
-  height: 100%;
-  perspective: 1000px; /* Add perspective for 3D effect */
-  transform-style: preserve-3d; /* Maintains 3D transformation */
-}
-
-.preview-side,
-.game-side {
-  width: 100%;
-  height: 100%; /* Set specific height */
-  display: flex;
-  flex-direction: column;
-  backface-visibility: hidden; /* Hide back face during rotation */
-  transform-style: preserve-3d; /* Ensures nested elements maintain 3D positioning */
-  transition: transform 0.8s ease;
-}
-
-.game-side {
-  transform: rotateY(180deg); /* Initially rotated to back */
-  position: absolute;
-  top: 0;
-  left: 0;
-}
-
-.hidden {
-  opacity: 0; /* Hide elements but keep them in the DOM for animation */
-  pointer-events: none; /* Prevent interaction */
+.game-preview-wrapper {
+  flex: 1;
+  min-height: 0; /* Allow flexbox to size this properly */
+  overflow: hidden; /* Prevent overflow in preview */
 }
 
 .buzzer-section {
   display: flex;
   flex-direction: column;
   align-items: center;
-  backface-visibility: hidden; /* Prevents seeing the back of rotated elements */
-  transform-style: preserve-3d; /* Ensures nested elements maintain 3D positioning */
-}
-
-.game-preview-wrapper {
-  flex: 1;
-  flex-grow: 0.9;
-  position: relative; /* Added for animation */
-  backface-visibility: hidden; /* Prevents seeing the back of rotated elements */
-  transform-style: preserve-3d; /* Ensures nested elements maintain 3D positioning */
 }
 
 .buzzer-wrapper {
@@ -101,6 +116,8 @@ h1 {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  min-width: 0; /* Allow grid item to shrink below min-content width */
+  overflow: hidden; /* Prevent overflow in right panel */
 }
 
 .game-actions {
@@ -125,6 +142,8 @@ h1 {
   position: relative; /* Added for animation */
   backface-visibility: hidden; /* Prevents seeing the back of rotated elements */
   transform-style: preserve-3d; /* Ensures nested elements maintain 3D positioning */
+  min-height: 0; /* Allow flexbox to size this properly */
+  overflow: hidden; /* Prevent overflow in game component */
 }
 
 .end-game-btn {

@@ -1,12 +1,13 @@
 .game-preview-container {
-  min-width: 50vw;
+  min-width: 0; /* Allow container to shrink */
+  min-height: 0; /* Allow container to shrink */
   display: flex;
   flex-direction: column;
   width: 100%;
   height: 100%;
   border: 2px solid var(--p-primary-color);
   border-radius: 8px;
-  overflow: hidden;
+  overflow: hidden; /* Contain all content */
   background-color: var(--p-surface-card);
   max-height: calc(66vh - 100px); // Limit maximum height
   padding: 0;
@@ -27,9 +28,10 @@
 
 .game-content {
   flex: 1;
-  overflow-y: auto;
   padding: 0 15px;
-  overflow-y: scroll;
+  overflow-y: auto; /* Allow scrolling but only vertically */
+  overflow-x: hidden; /* Prevent horizontal overflow */
+  min-height: 0; /* Important for nested flex containers */
 }
 
 .game-description {

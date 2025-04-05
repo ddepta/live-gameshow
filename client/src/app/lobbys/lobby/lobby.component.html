@@ -30,31 +30,37 @@
       </div>
     </div>
 
-    <div class="center-area">
-      <!-- Show game preview when game is not started -->
-      <div *ngIf="!isGameStarted" class="game-preview-wrapper">
-        <app-game-preview></app-game-preview>
-      </div>
+    <!-- Implement flip-card structure for the center area -->
+    <div class="flip-card" [class.is-flipped]="isGameStarted">
+      <div class="flip-card-inner">
+        <!-- Front side (Lobby view) -->
+        <div class="flip-card-front">
+          <div class="game-preview-wrapper">
+            <app-game-preview></app-game-preview>
+          </div>
 
-      <!-- Show test buzzer when game is not started -->
-      <div *ngIf="!isGameStarted">
-        <h3 class="center">TESTBUZZER</h3>
-        <div class="buzzer-wrapper">
-          <app-buzzer
-            [lobbyCode]="lobbyCode"
-            [isModerator]="lobby.isModerator"
-            size="small"
-          ></app-buzzer>
+          <div class="buzzer-section">
+            <h3 class="center">TESTBUZZER</h3>
+            <div class="buzzer-wrapper">
+              <app-buzzer
+                [lobbyCode]="lobbyCode"
+                [isModerator]="lobby.isModerator"
+                size="small"
+              ></app-buzzer>
+            </div>
+          </div>
         </div>
-      </div>
 
-      <!-- Show game component when game is started -->
-      <div *ngIf="isGameStarted" class="game-wrapper">
-        <app-game
-          [lobbyCode]="lobbyCode"
-          (questionChanged)="updateQuestionIndex($event)"
-        >
-        </app-game>
+        <!-- Back side (Game view) -->
+        <div class="flip-card-back">
+          <div class="game-wrapper">
+            <app-game
+              [lobbyCode]="lobbyCode"
+              (questionChanged)="updateQuestionIndex($event)"
+            >
+            </app-game>
+          </div>
+        </div>
       </div>
     </div>
 

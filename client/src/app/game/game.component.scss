@@ -3,7 +3,8 @@
   flex-direction: column;
   height: 100%;
   width: 100%;
-  min-width: 50vw;
+  min-width: 0; /* Allow container to shrink */
+  overflow: hidden; /* Prevent overflow */
 }
 
 .game-header {
@@ -45,21 +46,23 @@
 }
 
 .game-view-container {
-  min-width: auto; // Remove min-width constraint for embedding
+  min-width: auto; /* Remove min-width constraint for embedding */
   display: flex;
   flex-direction: column;
   width: 100%;
   border: 2px solid var(--p-primary-color);
   border-radius: 8px;
-  overflow: hidden;
   background-color: var(--p-surface-card);
-  max-height: calc(80vh - 100px);
-  padding: 0;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0; /* Allow container to resize properly */
 }
 
 .game-info {
   padding: 20px;
   overflow-y: auto;
+  flex: 1;
+  min-height: 0; /* Allow proper scrolling */
 }
 
 .game-title {

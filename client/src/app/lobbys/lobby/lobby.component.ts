@@ -1,15 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import {
-  animate,
-  style,
-  transition,
-  trigger,
-  query,
-  stagger,
-  animateChild,
-  group,
-} from '@angular/animations';
 import { LobbyService } from '../lobby.service';
 import { Lobby, EventHistory } from '../../types';
 import { BuzzerComponent } from '../buzzer/buzzer.component';
@@ -41,119 +31,14 @@ import { GameData } from '../../game.service';
   providers: [GameService],
   templateUrl: './lobby.component.html',
   styleUrls: ['./lobby.component.scss'],
-  animations: [
-    trigger('fadeSlide', [
-      transition(':enter', [
-        style({ opacity: 0, transform: 'translateY(20px) rotateX(-30deg)' }),
-        animate(
-          '400ms ease-out',
-          style({ opacity: 1, transform: 'translateY(0) rotateX(0)' })
-        ),
-      ]),
-      transition(':leave', [
-        animate(
-          '400ms ease-in',
-          style({ opacity: 0, transform: 'translateY(-20px) rotateX(30deg)' })
-        ),
-      ]),
-    ]),
-    trigger('pageAnimation', [
-      transition('preview => game', [
-        // Set up the container
-        style({ perspective: '1000px' }),
-
-        // Front side (preview) animation
-        query('.preview-side', [
-          style({
-            position: 'absolute',
-            backfaceVisibility: 'hidden',
-            transformStyle: 'preserve-3d',
-            transform: 'rotateY(0deg)',
-            width: '100%',
-          }),
-          animate(
-            '800ms ease-in',
-            style({
-              transform: 'rotateY(180deg)',
-            })
-          ),
-        ]),
-
-        // Back side (game) animation
-        query(
-          '.game-side',
-          [
-            style({
-              position: 'absolute',
-              backfaceVisibility: 'hidden',
-              transformStyle: 'preserve-3d',
-              transform: 'rotateY(-180deg)',
-              width: '100%',
-            }),
-            animate(
-              '800ms ease-in',
-              style({
-                transform: 'rotateY(0deg)',
-              })
-            ),
-          ],
-          { optional: true }
-        ),
-      ]),
-
-      transition('game => preview', [
-        // Set up the container
-        style({ perspective: '1000px' }),
-
-        // Back side (game) animation
-        query('.game-side', [
-          style({
-            position: 'absolute',
-            backfaceVisibility: 'hidden',
-            transformStyle: 'preserve-3d',
-            transform: 'rotateY(0deg)',
-            width: '100%',
-          }),
-          animate(
-            '800ms ease-in',
-            style({
-              transform: 'rotateY(-180deg)',
-            })
-          ),
-        ]),
-
-        // Front side (preview) animation
-        query(
-          '.preview-side',
-          [
-            style({
-              position: 'absolute',
-              backfaceVisibility: 'hidden',
-              transformStyle: 'preserve-3d',
-              transform: 'rotateY(180deg)',
-              width: '100%',
-            }),
-            animate(
-              '800ms ease-in',
-              style({
-                transform: 'rotateY(0deg)',
-              })
-            ),
-          ],
-          { optional: true }
-        ),
-      ]),
-    ]),
-  ],
 })
 export class LobbyComponent implements OnInit {
   lobbyCode!: string;
   lobby!: Lobby;
   eventHistory: EventHistory[] = [];
-  isGameStarted = false; // Track whether game is started
+  isGameStarted = false;
   gameData: GameData | null = null;
   currentQuestionIndex = 0;
-  animationState: 'preview' | 'game' = 'preview';
 
   @ViewChild(GameComponent) gameComponent?: GameComponent;
 
@@ -198,8 +83,7 @@ export class LobbyComponent implements OnInit {
     if (this.lobby.isModerator) {
       // Get game data first before showing game UI
       this.gameData = this.gameService.getGameData();
-      this.isGameStarted = true;
-      this.animationState = 'game'; // Update animation state
+      this.isGameStarted = true; // This now controls the flip
 
       // Set up subscription to track question changes
       this.gameService.gameData$.subscribe((data) => {
@@ -220,7 +104,6 @@ export class LobbyComponent implements OnInit {
 
   endGame(): void {
     // Return to lobby mode
-    this.isGameStarted = false;
-    this.animationState = 'preview'; // Update animation state
+    this.isGameStarted = false; // This now controls the flip
   }
 }
