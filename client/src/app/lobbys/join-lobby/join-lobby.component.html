@@ -1,19 +1,29 @@
 <div class="container">
-  <div class="title-section">
+  <div class="header">
     <h1>JOIN THE <span class="highlight">LIVE</span> GAMESHOW</h1>
   </div>
 
+  <div class="title-section">
+    <h3>
+      Wähl einen Avatar, gib dir einen Usernamen und tritt einer Lobby bei –
+      oder starte deine eigene Gameshow!
+    </h3>
+  </div>
   <div class="layout-container">
     <div class="side-button left" (click)="createLobby()">
       <div class="plus-container">
         <ng-icon name="gameRetroController" class="plus" />
       </div>
-      <p-button label="LOBBY ERSTELLEN" variant="outlined"></p-button>
+      <p-button
+        label="LOBBY ERSTELLEN"
+        variant="outlined"
+        class="full-width"
+      ></p-button>
     </div>
 
-    <button class="center-circle">
+    <div class="animated-card">
       <span>UPLOAD AVATAR</span>
-    </button>
+    </div>
 
     <div class="side-button right">
       <div class="lobby-code-container">
@@ -30,6 +40,7 @@
         label="LOBBY BETRETEN"
         (click)="joinLobby()"
         variant="outlined"
+        class="full-width"
       ></p-button>
     </div>
   </div>

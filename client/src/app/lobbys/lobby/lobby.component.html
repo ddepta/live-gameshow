@@ -12,18 +12,17 @@
     <div class="left-panel">
       <app-interactive-user-panel [lobby]="lobby"></app-interactive-user-panel>
       <app-get-lobby-code></app-get-lobby-code>
+      <!-- Only show start game button for moderator -->
+      <div class="game-actions" *ngIf="lobby.isModerator">
+        <p-button class="start-game-btn" (click)="startGame()">
+          SPIEL STARTEN
+        </p-button>
+      </div>
     </div>
 
     <div class="center-area">
       <div class="game-preview-wrapper">
         <app-game-preview></app-game-preview>
-      </div>
-
-      <!-- Only show start game button for moderator -->
-      <div class="game-actions" *ngIf="lobby.isModerator">
-        <button class="start-game-btn" (click)="startGame()">
-          SPIEL STARTEN
-        </button>
       </div>
 
       <h3 class="center">TESTBUZZER</h3>

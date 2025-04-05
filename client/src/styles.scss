@@ -1,14 +1,17 @@
 /* You can add global styles to this file, and also import other style files */
-// body {
-// margin: 0;
-// font-family: 'Arial', sans-serif;
-// background-color: #000; // Black background
-// color: #fff; // White text
-// }
+
+:root {
+  --size: 20px;
+}
+
 body {
   background-color: var(--p-surface-950);
   font-family: "Orbit";
   color: var(--p-primary-color);
+  min-height: 100vh;
+  display: grid;
+  margin: 0;
+  padding: 0;
 
   scrollbar-color: var(--p-primary-color) var(--p-surface-950);
   scrollbar-width: 6px;
@@ -28,6 +31,50 @@ body {
   // color: var(--text-color);
 }
 
+app-root {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  z-index: 1; /* Ensure content is above background */
+  margin: 0 auto;
+
+  @media (min-width: 2000px) {
+    width: 80%;
+    max-width: 80%;
+  }
+}
+
+/* Create a background pseudo-element with the mask effect */
+app-root::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -1; /* Position it behind all content */
+  background: conic-gradient(
+    from 180deg at 50% 70%,
+    #022c22 0deg,
+    #065f46 72deg,
+    #022c22 144deg,
+    #065f46 216deg,
+    #022c22 288deg,
+    #065f46 1turn
+  );
+  mask: radial-gradient(circle at 40% 40%, white 2px, transparent 2.5px) 50% 50% /
+      var(--size) var(--size),
+    url("assets/images/image.png") 256px 50% / 256px 256px;
+  mask-composite: intersect;
+  animation: flicker 20s infinite linear;
+}
+
+@keyframes flicker {
+  to {
+    mask-position: 50% 50%, 0 50%;
+  }
+}
+
 @font-face {
   font-family: "Orbit";
   // src: url('assets/fonts/Orbitron-VariableFont_wght.ttf') format('truetype');
@@ -38,4 +85,31 @@ body {
 
 input {
   box-shadow: 0 0 15px 0px var(--p-primary-color);
+}
+
+::view-transition-old(root) {
+  animation: slide-left 1s ease;
+}
+::view-transition-new(root) {
+  animation: slide-right 1s ease;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes slide-left {
+  to {
+    transform: translateX(-100vw);
+  }
+}
+@keyframes slide-right {
+  from {
+    transform: translateX(100vw);
+  }
 }

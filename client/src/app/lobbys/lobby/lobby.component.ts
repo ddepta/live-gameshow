@@ -10,6 +10,7 @@ import { GetLobbyCodeComponent } from '../get-lobby-code/get-lobby-code.componen
 import { GameService } from '../../game.service';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
+import { ButtonModule } from 'primeng/button';
 
 @Component({
   selector: 'app-lobby',
@@ -22,6 +23,7 @@ import { HttpClientModule } from '@angular/common/http';
     GamePreviewComponent,
     InteractiveUserPanelComponent,
     GetLobbyCodeComponent,
+    ButtonModule,
   ],
   providers: [GameService],
   templateUrl: './lobby.component.html',

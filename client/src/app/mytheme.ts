@@ -546,10 +546,10 @@ const MyPreset = definePreset(Aura, {
           950: '{zinc.950}',
         },
         primary: {
-          color: '{primary.400}',
+          color: '{primary.500}',
           contrastColor: '{surface.900}',
-          hoverColor: '{primary.300}',
-          activeColor: '{primary.200}',
+          hoverColor: '{primary.400}',
+          activeColor: '{primary.500}',
         },
         highlight: {
           background: 'color-mix(in srgb, {primary.400}, transparent 84%)',
@@ -568,7 +568,7 @@ const MyPreset = definePreset(Aura, {
           filledHoverBackground: '{surface.800}',
           filledFocusBackground: '{surface.800}',
           borderColor: '{primary.color}',
-          hoverBorderColor: '{surface.500}',
+          hoverBorderColor: '{primary.700}',
           focusBorderColor: '{primary.color}',
           invalidBorderColor: '{red.300}',
           color: '{surface.0}',
