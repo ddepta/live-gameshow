@@ -290,6 +290,86 @@ io.on("connection", (socket) => {
     console.log("a user disconnected!");
   });
 
+  // Game events
+  socket.on("game:start", (lobbyCode) => {
+    console.log("Game started in lobby:", lobbyCode);
+    const foundUser = findUserBySocketId(socket.id);
+
+    if (foundUser) {
+      const lobby = lobbys.find((lobby) => lobby.lobbyCode === lobbyCode);
+      if (lobby && lobby.moderator.username === foundUser.username) {
+        // Broadcast game start to everyone in the lobby except sender
+        socket.to(lobbyCode).emit("game:started");
+
+        // Log event in lobby history
+        addEventToLobbyEventHistory(
+          lobbyCode,
+          "game:started",
+          foundUser.username,
+          ""
+        );
+      }
+    }
+  });
+
+  socket.on("game:question:change", (lobbyCode, questionIndex) => {
+    console.log(
+      "Question changed in lobby:",
+      lobbyCode,
+      "to index:",
+      questionIndex
+    );
+    const foundUser = findUserBySocketId(socket.id);
+
+    if (foundUser) {
+      const lobby = lobbys.find((lobby) => lobby.lobbyCode === lobbyCode);
+      if (lobby && lobby.moderator.username === foundUser.username) {
+        // Broadcast question change to everyone in the lobby except sender
+        socket.to(lobbyCode).emit("game:question:change", questionIndex);
+
+        // Log event in lobby history
+        addEventToLobbyEventHistory(
+          lobbyCode,
+          "game:question:change",
+          foundUser.username,
+          { questionIndex: questionIndex }
+        );
+      }
+    }
+  });
+  socket.on("game:end", (lobbyCode) => {
+    console.log("Game ended in lobby:", lobbyCode);
+    const foundUser = findUserBySocketId(socket.id);
+
+    if (foundUser) {
+      const lobby = lobbys.find((lobby) => lobby.lobbyCode === lobbyCode);
+      if (lobby && lobby.moderator.username === foundUser.username) {
+        // Change from io.in to socket.to to avoid sending to sender,
+        // and fix event name to match what client is listening for
+        socket.to(lobbyCode).emit("game:ended");
+
+        // Update lobby state
+        lobby.isActive = false;
+
+        // Log event in lobby history
+        addEventToLobbyEventHistory(
+          lobbyCode,
+          "game:ended", // Also update the event name in history for consistency
+          foundUser.username,
+          {}
+        );
+
+        console.log(
+          `Game ended in lobby ${lobbyCode} by ${foundUser.username}`
+        );
+      } else {
+        console.log("Unauthorized attempt to end game or lobby not found");
+      }
+    } else {
+      console.log("Unknown user tried to end game");
+    }
+  });
+
   function sendCurrentBuzzerState(lobbyCode) {
     const lobby = lobbys.find((lobby) => lobby.lobbyCode === lobbyCode);
     if (lobby?.currentBuzzerState) {

@@ -1,5 +1,13 @@
 <div class="game-container" *ngIf="gameData && currentQuestion">
-  <div class="content">
+  <div
+    class="content"
+    [ngClass]="{
+      'animate-out-left': isAnimatingOut && animationDirection === 'next',
+      'animate-out-right': isAnimatingOut && animationDirection === 'prev',
+      'animate-in-right': isAnimatingIn && animationDirection === 'next',
+      'animate-in-left': isAnimatingIn && animationDirection === 'prev'
+    }"
+  >
     <div class="game-view-container">
       <div class="game-info">
         <div class="question-content">
@@ -9,7 +17,7 @@
 
       <div class="question-nav">
         <button
-          [disabled]="currentQuestionIndex === 0"
+          [disabled]="currentQuestionIndex === 0 || isAnimating"
           (click)="previousQuestion()"
         >
           VORHERIGE FRAGE
@@ -20,7 +28,10 @@
         </span>
 
         <button
-          [disabled]="currentQuestionIndex === gameData.questions.length - 1"
+          [disabled]="
+            currentQuestionIndex === gameData.questions.length - 1 ||
+            isAnimating
+          "
           (click)="nextQuestion()"
         >
           NÄCHSTE FRAGE

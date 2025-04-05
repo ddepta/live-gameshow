@@ -16,14 +16,14 @@
     <div class="left-panel">
       <app-interactive-user-panel [lobby]="lobby"></app-interactive-user-panel>
       <app-get-lobby-code></app-get-lobby-code>
-      <!-- Show start game button for moderator when game is not started -->
-      <div class="game-actions" *ngIf="lobby.isModerator && !isGameStarted">
+      <!-- Fix error by adding null check for lobby?.isModerator -->
+      <div class="game-actions" *ngIf="lobby?.isModerator && !isGameStarted">
         <p-button class="start-game-btn" (click)="startGame()">
           SPIEL STARTEN
         </p-button>
       </div>
-      <!-- Show end game button for moderator when game is started -->
-      <div class="game-actions" *ngIf="lobby.isModerator && isGameStarted">
+      <!-- Fix error by adding null check for lobby?.isModerator -->
+      <div class="game-actions" *ngIf="lobby?.isModerator && isGameStarted">
         <p-button class="end-game-btn" (click)="endGame()">
           SPIEL BEENDEN
         </p-button>
@@ -44,7 +44,7 @@
             <div class="buzzer-wrapper">
               <app-buzzer
                 [lobbyCode]="lobbyCode"
-                [isModerator]="lobby.isModerator"
+                [isModerator]="lobby?.isModerator || false"
                 size="small"
               ></app-buzzer>
             </div>
@@ -56,6 +56,7 @@
           <div class="game-wrapper">
             <app-game
               [lobbyCode]="lobbyCode"
+              [isModerator]="lobby?.isModerator || false"
               (questionChanged)="updateQuestionIndex($event)"
             >
             </app-game>

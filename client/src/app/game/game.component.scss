@@ -43,6 +43,8 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  position: relative; /* For animation positioning */
+  transition: transform 0.4s ease, opacity 0.4s ease;
 }
 
 .game-view-container {
@@ -80,12 +82,78 @@
 .question-content {
   text-align: center;
   margin-bottom: 30px;
+  position: relative;
+  transition: transform 0.4s ease, opacity 0.4s ease;
 }
 
 .question-text {
   font-size: 24px;
   line-height: 1.4;
   color: var(--p-primary-color);
+}
+
+/* Move animation classes to the content container */
+.animate-out-left {
+  animation: slideOutLeft 0.4s forwards;
+}
+
+.animate-in-right {
+  animation: slideInRight 0.4s forwards;
+}
+
+/* Make animations more pronounced for larger content */
+@keyframes slideOutLeft {
+  from {
+    transform: translateX(0) rotateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-150px) rotateY(-25deg);
+    opacity: 0;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(150px) rotateY(25deg);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0) rotateY(0);
+    opacity: 1;
+  }
+}
+/* filepath: /D:/Dokumente/source/live-gameshow/client/src/app/game/game.component.scss */
+/* Add these animation classes */
+
+.animate-out-right {
+  animation: slideOutRight 0.4s forwards;
+}
+
+.animate-in-left {
+  animation: slideInLeft 0.4s forwards;
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0) rotateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(150px) rotateY(25deg);
+    opacity: 0;
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-150px) rotateY(-25deg);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0) rotateY(0);
+    opacity: 1;
+  }
 }
 
 .options-container {
