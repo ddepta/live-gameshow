@@ -5,6 +5,9 @@ import {
   Output,
   EventEmitter,
   OnDestroy,
+  ElementRef,
+  ViewChild,
+  AfterViewInit,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { GameService, GameData, Question } from '../game.service';
@@ -13,16 +16,39 @@ import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { BuzzerComponent } from '../lobbys/buzzer/buzzer.component';
 import { Subscription } from 'rxjs';
+import { NgIconComponent, provideIcons } from '@ng-icons/core';
+import { typChevronLeft, typChevronRight } from '@ng-icons/typicons';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { TextareaModule } from 'primeng/textarea';
+import { phosphorCheckFatFill } from '@ng-icons/phosphor-icons/fill';
+import { phosphorCheckFat } from '@ng-icons/phosphor-icons/regular';
 
 @Component({
   selector: 'app-game',
   standalone: true,
-  imports: [CommonModule, HttpClientModule, BuzzerComponent],
-  providers: [GameService],
+  imports: [
+    CommonModule,
+    HttpClientModule,
+    BuzzerComponent,
+    NgIconComponent,
+    ButtonModule,
+    InputTextModule,
+    TextareaModule, // Import PrimeNG ButtonModule instead of ToggleButtonModule
+  ],
+  providers: [
+    GameService,
+    provideIcons({
+      typChevronLeft,
+      typChevronRight,
+      phosphorCheckFatFill,
+      phosphorCheckFat,
+    }),
+  ],
   templateUrl: './game.component.html',
   styleUrls: ['./game.component.scss'],
 })
-export class GameComponent implements OnInit, OnDestroy {
+export class GameComponent implements OnInit, OnDestroy, AfterViewInit {
   @Input() lobbyCode: string = '';
   @Input() isModerator: boolean = false;
   @Output() questionChanged = new EventEmitter<number>();
@@ -38,6 +64,20 @@ export class GameComponent implements OnInit, OnDestroy {
   isAnimatingOut = false;
   isAnimatingIn = false;
   animationDirection: 'next' | 'prev' = 'next';
+
+  // Track if answer should be blurred
+  isAnswerBlurred = true;
+
+  // Track selected answer
+  selectedAnswer: string | null = null;
+
+  // Add a state variable to track submission status
+  estimationSubmitted = false;
+
+  // Add a state variable to track multiple choice submission status
+  multipleChoiceSubmitted = false;
+
+  @ViewChild('estimationInput') estimationInputRef?: ElementRef;
 
   get currentQuestion(): Question | undefined {
     return this.gameData?.questions[this.currentQuestionIndex];
@@ -84,6 +124,11 @@ export class GameComponent implements OnInit, OnDestroy {
         }
       })
     );
+  }
+
+  ngAfterViewInit() {
+    // Focus the estimation input if it exists
+    this.focusEstimationInput();
   }
 
   ngOnDestroy(): void {
@@ -158,6 +203,10 @@ export class GameComponent implements OnInit, OnDestroy {
   private animateQuestionChange(callback: () => void): void {
     this.isAnimating = true;
     this.isAnimatingOut = true;
+    this.isAnswerBlurred = true; // Reset blur state for new question
+    this.selectedAnswer = null; // Reset selected answer for new question
+    this.estimationSubmitted = false; // Reset estimation submission state
+    this.multipleChoiceSubmitted = false; // Reset multiple choice submission state
 
     // After first animation finishes, update the question and show the next one
     setTimeout(() => {
@@ -172,29 +221,93 @@ export class GameComponent implements OnInit, OnDestroy {
       setTimeout(() => {
         this.isAnimatingIn = false;
         this.isAnimating = false;
+        this.focusEstimationInput(); // Focus the input after animation
       }, 400); // This timing should match the CSS animation duration
     }, 400); // This timing should match the CSS animation duration
+  }
+
+  // Toggle blur state on answer click
+  toggleAnswerBlur(): void {
+    this.isAnswerBlurred = !this.isAnswerBlurred;
   }
 
   backToLobby(): void {
     this.router.navigate(['/lobby', this.lobbyCode]);
   }
 
+  // Update select answer method to just track selection without submitting
   selectAnswer(option: string): void {
-    console.log('Selected answer:', option);
-    // Here you would handle the answer selection logic
-    // For example, checking if it's correct and maybe moving to the next question
+    // Only allow selection if not already submitted
+    if (!this.multipleChoiceSubmitted) {
+      console.log('Selected answer:', option);
+      this.selectedAnswer = option;
+    }
   }
-  // Add to game.component.ts
+
+  // New method to confirm multiple choice selection
+  confirmMultipleChoice(): void {
+    if (this.selectedAnswer) {
+      console.log('Confirmed multiple choice answer:', this.selectedAnswer);
+      this.multipleChoiceSubmitted = true;
+      // Here you would handle the answer submission logic
+      // For example, checking if it's correct and maybe moving to the next question
+    } else {
+      console.error('No option selected');
+    }
+  }
+
   submitEstimation(value: string): void {
-    const numericValue = parseFloat(value);
-    if (!isNaN(numericValue)) {
-      console.log('Submitted estimation:', numericValue);
+    if (value) {
+      console.log('Submitted estimation:', value);
+      // Set to true (don't toggle) so button stays in filled state
+      this.estimationSubmitted = true;
       // Here you would handle the estimation submission logic
       // For example, checking how close it is to the correct answer
     } else {
       console.error('Invalid estimation value');
       // Handle invalid input
     }
+  }
+
+  // Method to adjust font size based on content
+  adjustFontSize(input: HTMLTextAreaElement) {
+    if (!input) return;
+
+    // Default large size
+    let fontSize = 10; // in vh units
+
+    // If content is too long, reduce font size
+    const contentLength = input.value.length;
+
+    if (contentLength > 0) {
+      fontSize = 15; // Default large size
+      // Simple algorithm: reduce font size as content grows
+      // Adjust these numbers based on your specific input field size
+      if (contentLength > 5) fontSize = 13;
+      if (contentLength > 9) fontSize = 10;
+      if (contentLength > 12) fontSize = 8;
+      if (contentLength > 16) fontSize = 4.5;
+      if (contentLength > 20) {
+        input.style.lineHeight = '7vh';
+      } else {
+        input.style.lineHeight = '22vh';
+      }
+
+      input.style.fontSize = `${fontSize}vh`;
+    } else {
+      input.style.fontSize = `${fontSize}vh`;
+    }
+  }
+
+  // Focus the estimation input when the component loads or question changes
+  focusEstimationInput() {
+    setTimeout(() => {
+      if (
+        this.estimationInputRef &&
+        this.currentQuestion?.type === 'estimation'
+      ) {
+        this.estimationInputRef.nativeElement.focus();
+      }
+    }, 500);
   }
 }

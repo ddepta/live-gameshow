@@ -11,44 +11,79 @@
     <div class="game-view-container">
       <div class="game-info">
         <div class="question-content">
+          <!-- Left navigation arrow - only visible to moderator -->
+          <button
+            *ngIf="isModerator"
+            class="nav-arrow nav-arrow-left"
+            [disabled]="currentQuestionIndex === 0 || isAnimating"
+            (click)="previousQuestion()"
+          >
+            <ng-icon name="typChevronLeft"></ng-icon>
+          </button>
+
           <p class="question-text">{{ currentQuestion.question }}</p>
+
+          <!-- Right navigation arrow - only visible to moderator -->
+          <button
+            *ngIf="isModerator"
+            class="nav-arrow nav-arrow-right"
+            [disabled]="
+              currentQuestionIndex === gameData.questions.length - 1 ||
+              isAnimating
+            "
+            (click)="nextQuestion()"
+          >
+            <ng-icon name="typChevronRight"></ng-icon>
+          </button>
         </div>
       </div>
 
-      <div class="question-nav">
-        <button
-          [disabled]="currentQuestionIndex === 0 || isAnimating"
-          (click)="previousQuestion()"
-        >
-          VORHERIGE FRAGE
-        </button>
-
-        <span class="question-counter">
-          {{ currentQuestionIndex + 1 }} / {{ gameData.questions.length }}
-        </span>
-
-        <button
-          [disabled]="
-            currentQuestionIndex === gameData.questions.length - 1 ||
-            isAnimating
-          "
-          (click)="nextQuestion()"
-        >
-          NÄCHSTE FRAGE
-        </button>
+      <!-- Replace the counter with correct answer / counter based on role -->
+      <div
+        *ngIf="isModerator"
+        class="question-answer"
+        [class.blurred]="isAnswerBlurred"
+        (click)="toggleAnswerBlur()"
+      >
+        <!-- Show correct answer for moderators -->
+        <div class="correct-answer-container">
+          Antwort: {{ currentQuestion.correctAnswer }}
+        </div>
       </div>
     </div>
 
+    <!-- Updated multiple choice section with confirmation button -->
     <div
       class="options-container"
       *ngIf="currentQuestion.type === 'multipleChoice'"
     >
+      <div class="options-grid">
+        <div class="option-btn" *ngFor="let option of currentQuestion.options">
+          <p-button
+            [outlined]="selectedAnswer !== option"
+            (onClick)="selectAnswer(option)"
+            styleClass="w-full"
+            [disabled]="multipleChoiceSubmitted"
+          >
+            {{ option }}
+          </p-button>
+        </div>
+      </div>
+
+      <!-- Add confirm button -->
       <button
-        class="option-btn"
-        *ngFor="let option of currentQuestion.options"
-        (click)="selectAnswer(option)"
+        class="confirm-button"
+        [class.submitted]="multipleChoiceSubmitted"
+        (click)="confirmMultipleChoice()"
+        [disabled]="!selectedAnswer"
       >
-        {{ option }}
+        <ng-icon
+          [name]="
+            multipleChoiceSubmitted
+              ? 'phosphorCheckFatFill'
+              : 'phosphorCheckFat'
+          "
+        ></ng-icon>
       </button>
     </div>
 
@@ -64,23 +99,34 @@
       class="estimation-container"
       *ngIf="currentQuestion.type === 'estimation'"
     >
-      <p class="estimation-info">Schätzfrage: Geben Sie Ihre Schätzung ein</p>
-      <input
-        type="number"
-        class="estimation-input"
-        placeholder="Ihre Schätzung..."
-        #estimationInput
-      />
+      <div class="estimation-input-container">
+        <textarea
+          type="text"
+          #estimationInput
+          class="estimation-input"
+          placeholder="Schätzung..."
+          pTextarea
+          (input)="adjustFontSize(estimationInput)"
+          [disabled]="estimationSubmitted"
+          autofocus
+        ></textarea>
+      </div>
+
       <button
-        class="submit-btn"
+        class="confirm-button"
+        [class.submitted]="estimationSubmitted"
         (click)="submitEstimation(estimationInput.value)"
       >
-        BESTÄTIGEN
+        <ng-icon
+          [name]="
+            estimationSubmitted ? 'phosphorCheckFatFill' : 'phosphorCheckFat'
+          "
+        ></ng-icon>
       </button>
     </div>
+  </div>
 
-    <div class="loading-info" *ngIf="!gameData">
-      <p>Spielinformationen werden geladen...</p>
-    </div>
+  <div class="loading-info" *ngIf="!gameData">
+    <p>Spielinformationen werden geladen...</p>
   </div>
 </div>
