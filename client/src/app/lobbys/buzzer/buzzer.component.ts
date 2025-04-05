@@ -31,6 +31,7 @@ export class BuzzerComponent {
 
   @Input() lobbyCode!: string;
   @Input() isModerator?: boolean;
+  @Input() size: 'small' | 'large' = 'small'; // Default to small size
 
   constructor(private buzzerService: BuzzerService) {}
 

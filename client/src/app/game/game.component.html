@@ -1,1 +1,75 @@
-<p>Game works</p>
+<div class="game-container" *ngIf="gameData && currentQuestion">
+  <div class="content">
+    <div class="game-view-container">
+      <div class="game-info">
+        <div class="question-content">
+          <p class="question-text">{{ currentQuestion.question }}</p>
+        </div>
+      </div>
+
+      <div class="question-nav">
+        <button
+          [disabled]="currentQuestionIndex === 0"
+          (click)="previousQuestion()"
+        >
+          VORHERIGE FRAGE
+        </button>
+
+        <span class="question-counter">
+          {{ currentQuestionIndex + 1 }} / {{ gameData.questions.length }}
+        </span>
+
+        <button
+          [disabled]="currentQuestionIndex === gameData.questions.length - 1"
+          (click)="nextQuestion()"
+        >
+          NÄCHSTE FRAGE
+        </button>
+      </div>
+    </div>
+
+    <div
+      class="options-container"
+      *ngIf="currentQuestion.type === 'multipleChoice'"
+    >
+      <button
+        class="option-btn"
+        *ngFor="let option of currentQuestion.options"
+        (click)="selectAnswer(option)"
+      >
+        {{ option }}
+      </button>
+    </div>
+
+    <div class="buzzer-container" *ngIf="currentQuestion.type === 'buzzer'">
+      <app-buzzer
+        [lobbyCode]="lobbyCode"
+        [isModerator]="true"
+        size="large"
+      ></app-buzzer>
+    </div>
+
+    <div
+      class="estimation-container"
+      *ngIf="currentQuestion.type === 'estimation'"
+    >
+      <p class="estimation-info">Schätzfrage: Geben Sie Ihre Schätzung ein</p>
+      <input
+        type="number"
+        class="estimation-input"
+        placeholder="Ihre Schätzung..."
+        #estimationInput
+      />
+      <button
+        class="submit-btn"
+        (click)="submitEstimation(estimationInput.value)"
+      >
+        BESTÄTIGEN
+      </button>
+    </div>
+
+    <div class="loading-info" *ngIf="!gameData">
+      <p>Spielinformationen werden geladen...</p>
+    </div>
+  </div>
+</div>

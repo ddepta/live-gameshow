@@ -1,6 +1,7 @@
 <div class="buzzer-container">
   <button
     class="buzzer-button"
+    [class.large]="size === 'large'"
     [class.buzzered]="activeBuzzer"
     [class.locked]="buzzerLocked"
     [disabled]="activeBuzzer || buzzerLocked"

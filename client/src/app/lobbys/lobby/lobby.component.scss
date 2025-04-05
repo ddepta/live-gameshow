@@ -46,11 +46,49 @@ h1 {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  position: relative;
+  height: 100%;
+  perspective: 1000px; /* Add perspective for 3D effect */
+  transform-style: preserve-3d; /* Maintains 3D transformation */
+}
+
+.preview-side,
+.game-side {
+  width: 100%;
+  height: 100%; /* Set specific height */
+  display: flex;
+  flex-direction: column;
+  backface-visibility: hidden; /* Hide back face during rotation */
+  transform-style: preserve-3d; /* Ensures nested elements maintain 3D positioning */
+  transition: transform 0.8s ease;
+}
+
+.game-side {
+  transform: rotateY(180deg); /* Initially rotated to back */
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.hidden {
+  opacity: 0; /* Hide elements but keep them in the DOM for animation */
+  pointer-events: none; /* Prevent interaction */
+}
+
+.buzzer-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  backface-visibility: hidden; /* Prevents seeing the back of rotated elements */
+  transform-style: preserve-3d; /* Ensures nested elements maintain 3D positioning */
 }
 
 .game-preview-wrapper {
   flex: 1;
   flex-grow: 0.9;
+  position: relative; /* Added for animation */
+  backface-visibility: hidden; /* Prevents seeing the back of rotated elements */
+  transform-style: preserve-3d; /* Ensures nested elements maintain 3D positioning */
 }
 
 .buzzer-wrapper {
@@ -76,5 +114,30 @@ h1 {
   width: 100%;
   .p-button {
     width: 100%;
+  }
+}
+
+.game-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative; /* Added for animation */
+  backface-visibility: hidden; /* Prevents seeing the back of rotated elements */
+  transform-style: preserve-3d; /* Ensures nested elements maintain 3D positioning */
+}
+
+.end-game-btn {
+  margin-top: 50px;
+  width: 100%;
+  .p-button {
+    width: 100%;
+    background-color: var(--p-red-500);
+    border-color: var(--p-red-500);
+
+    &:hover {
+      background-color: var(--p-red-600);
+      border-color: var (--p-red-600);
+    }
   }
 }

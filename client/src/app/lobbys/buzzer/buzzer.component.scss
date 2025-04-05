@@ -11,7 +11,7 @@
 }
 
 .buzzer-button {
-  width: 150px;
+  width: 150px; // Default small size
   height: 150px;
   cursor: pointer;
   background-color: transparent;
@@ -19,11 +19,27 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  //   transition: all 0.3s ease;
   padding: 0;
   outline: none;
   position: relative;
   overflow: hidden;
+
+  &.large {
+    width: 40vh;
+    height: 40vh;
+
+    .profile-placeholder {
+      font-size: 4rem;
+    }
+
+    .buzzer-name {
+      font-size: 3.5rem;
+    }
+
+    .buzzer-text {
+      font-size: 2rem;
+    }
+  }
 
   .pulse-ring {
     position: absolute;

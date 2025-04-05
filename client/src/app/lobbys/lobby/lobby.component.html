@@ -1,10 +1,14 @@
 <div class="page-container">
   <div class="header">
-    <h1>
+    <h1 *ngIf="!isGameStarted">
       LOBBY VON
       <span class="highlight">{{
         lobby?.moderator?.username?.toUpperCase()
       }}</span>
+    </h1>
+    <h1 *ngIf="isGameStarted && gameData">
+      FRAGE <span class="highlight">{{ currentQuestionIndex + 1 }}</span> VON
+      <span class="highlight">{{ gameData.questions.length }}</span>
     </h1>
   </div>
 
@@ -12,25 +16,45 @@
     <div class="left-panel">
       <app-interactive-user-panel [lobby]="lobby"></app-interactive-user-panel>
       <app-get-lobby-code></app-get-lobby-code>
-      <!-- Only show start game button for moderator -->
-      <div class="game-actions" *ngIf="lobby.isModerator">
+      <!-- Show start game button for moderator when game is not started -->
+      <div class="game-actions" *ngIf="lobby.isModerator && !isGameStarted">
         <p-button class="start-game-btn" (click)="startGame()">
           SPIEL STARTEN
+        </p-button>
+      </div>
+      <!-- Show end game button for moderator when game is started -->
+      <div class="game-actions" *ngIf="lobby.isModerator && isGameStarted">
+        <p-button class="end-game-btn" (click)="endGame()">
+          SPIEL BEENDEN
         </p-button>
       </div>
     </div>
 
     <div class="center-area">
-      <div class="game-preview-wrapper">
+      <!-- Show game preview when game is not started -->
+      <div *ngIf="!isGameStarted" class="game-preview-wrapper">
         <app-game-preview></app-game-preview>
       </div>
 
-      <h3 class="center">TESTBUZZER</h3>
-      <div class="buzzer-wrapper">
-        <app-buzzer
+      <!-- Show test buzzer when game is not started -->
+      <div *ngIf="!isGameStarted">
+        <h3 class="center">TESTBUZZER</h3>
+        <div class="buzzer-wrapper">
+          <app-buzzer
+            [lobbyCode]="lobbyCode"
+            [isModerator]="lobby.isModerator"
+            size="small"
+          ></app-buzzer>
+        </div>
+      </div>
+
+      <!-- Show game component when game is started -->
+      <div *ngIf="isGameStarted" class="game-wrapper">
+        <app-game
           [lobbyCode]="lobbyCode"
-          [isModerator]="lobby?.isModerator"
-        ></app-buzzer>
+          (questionChanged)="updateQuestionIndex($event)"
+        >
+        </app-game>
       </div>
     </div>
 
