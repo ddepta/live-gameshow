@@ -90,12 +90,13 @@
   text-transform: uppercase;
 }
 
+// Fix the grid layout to ensure they match
 .question-content {
   text-align: center;
   position: relative;
   transition: transform 0.4s ease, opacity 0.4s ease;
   display: grid;
-  grid-template-columns: 80px 1fr 80px; /* Updated to 3 columns */
+  grid-template-columns: 150px 1fr; // Three columns with exact widths
   align-items: center;
   justify-content: center;
 }
@@ -116,7 +117,6 @@
   color: var(--p-primary-color);
   opacity: 0.7;
   transition: opacity 0.2s, transform 0.2s;
-  padding: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -140,8 +140,8 @@
   grid-column: 1; /* Place in first column */
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  align-items: start;
+  justify-content: left;
   gap: 10px;
 }
 
@@ -155,12 +155,35 @@
 }
 
 .nav-right-container {
-  grid-column: 3; /* Place in third column */
+  grid-column: 5; /* Place in third column */
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: end;
   justify-content: center;
   gap: 10px;
+}
+
+.eye-buttons-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  justify-content: center;
+}
+
+.nav-arrow-right {
+  /* Just ensure it's properly centered */
+  justify-self: center;
+}
+
+.show-eye {
+  /* Right position in the row */
+  /* Can be moved slightly right to align with the next button above */
+  margin-left: 2px;
+}
+
+.hide-eye {
+  /* Left position in the row */
+  margin-right: 2px;
 }
 
 .nav-arrow-right {
@@ -177,16 +200,27 @@
 }
 
 .nav-answer-action {
-  position: absolute;
-  right: 20px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--p-blue-500); /* Different color for answer action */
+  justify-self: center; /* Center align within container */
+  color: var(
+    --p-surface-950
+  ); /* Different color to indicate different action */
 
   &:hover {
-    color: var(--p-blue-600);
+    color: var(--p-primary-800);
   }
 }
+
+// .nav-answer-action {
+//   position: absolute;
+//   right: 20px;
+//   top: 50%;
+//   transform: translateY(-50%);
+//   color: var(--p-blue-500); /* Different color for answer action */
+
+//   &:hover {
+//     color: var(--p-blue-600);
+//   }
+// }
 
 /* Move animation classes to the content container */
 .animate-out-left {
@@ -395,62 +429,99 @@
   color: var(--p-primary-color);
 }
 
+.answer-container {
+  // aka game-info
+  overflow-y: auto;
+  min-height: 0; /* Allow proper scrolling */
+  position: relative;
+}
+
+// Match the exact grid structure
 .question-answer {
-  display: flex;
+  // aka question-content
+
+  text-align: center;
   justify-content: center;
+
+  display: grid;
+  grid-template-columns: 130px 1fr 0 0 150px; // Same as question-content
   align-items: center;
-  padding: 22px 20px 15px; /* Increase top padding to accommodate overlap */
+  padding-top: 10px;
+  padding-right: 20px;
+  padding-left: 20px;
   border-top: none;
   background-color: var(--p-primary-500);
-  position: relative; /* Ensure positioning context for the action button */
-  z-index: 1; /* Position under the game-info */
-
-  /* Only keep border radius at the very bottom of the container */
+  position: relative;
+  z-index: 1;
   border-bottom-left-radius: 6px;
   border-bottom-right-radius: 6px;
-
-  cursor: pointer; /* Indicate clickable area */
+  cursor: pointer;
   transition: filter 0.3s ease;
 
-  /* Blur effect by default */
   &.blurred {
     filter: blur(5px);
 
-    /* Remove blur on hover with transition */
     &:hover {
       filter: blur(3px);
     }
   }
 
-  button {
-    padding: 8px 15px;
-    background-color: var(--p-primary-color);
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
+  .answer-left-container {
+    // aka nav-left-container
+    grid-column: 1; /* Match nav-left-container */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
 
-    &:disabled {
-      background-color: var(--p-surface-200);
-      color: var(--p-surface-500);
-      cursor: not-allowed;
+  .correct-answer-text {
+    font-size: 20px;
+    line-height: 1.4;
+    color: var(--p-surface-950);
+    grid-column: 2; /* Place in middle column */
+  }
+
+  .answer-right-container {
+    // aka nav-right-container
+    grid-column: 5; /* Place in third column */
+    display: flex;
+    flex-direction: column;
+    align-items: end;
+    justify-content: center;
+    gap: 10px;
+
+    .answer-placeholder-right {
+      // Match height of nav-arrow-right
+      height: 54px;
+      width: 100%;
+    }
+
+    // Create a specific style for the answer eye buttons row
+    .answer-eye-buttons-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
     }
   }
 
-  .question-counter {
-    font-weight: bold;
-    color: var(--p-primary-color);
-  }
+  // .nav-answer-action {
+  //   color: var(--p-blue-500);
 
-  .correct-answer-container {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: bold;
-    color: black;
-    font-size: 20px;
-    margin-right: 50px; /* Make room for the action button */
-  }
+  //   &:hover {
+  //     color: var(--p-blue-600);
+  //   }
+
+  //   &.active {
+  //     background-color: rgba(var(--p-blue-rgb), 0.1);
+  //     color: var(--p-blue-500);
+  //     opacity: 1;
+  //     transform: scale(1.1);
+  //     box-shadow: 0 0 10px rgba(var(--p-blue-rgb), 0.3);
+  //   }
+  // }
 }
 
 .loading-info {
@@ -554,4 +625,48 @@
     text-align: center;
     padding: 20px;
   }
+}
+
+// Add these new styles for the eye control buttons
+.eye-control-buttons {
+  display: flex;
+  gap: 5px;
+
+  .nav-arrow {
+    transition: all 0.2s ease;
+
+    &.active {
+      background-color: rgba(var(--p-primary-rgb), 0.1);
+      color: var(--p-primary-color);
+      opacity: 1;
+      transform: scale(1.1);
+      box-shadow: 0 0 10px rgba(var(--p-primary-rgb), 0.3);
+    }
+
+    &:disabled {
+      cursor: default;
+    }
+
+    &:not(.active):not(:disabled):hover {
+      background-color: rgba(var(--p-primary-rgb), 0.05);
+    }
+  }
+}
+
+// Adjust positioning for answer controls
+.answer-controls {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+
+  // .nav-answer-action {
+  //   position: static; // Override absolute positioning from original
+  //   transform: none;
+
+  //   &.active {
+  //     color: var(--p-blue-500);
+  //     box-shadow: 0 0 10px rgba(var(--p-blue-rgb), 0.3);
+  //   }
+  // }
 }

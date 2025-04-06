@@ -180,6 +180,24 @@ export class GameComponent implements OnInit, OnDestroy, AfterViewInit {
         })
       );
     }
+
+    // Add listeners for question and answer hidden events
+    if (!this.isModerator) {
+      this.subscriptions.push(
+        this.lobbyService.onQuestionHidden().subscribe(() => {
+          console.log('Hiding question from participant');
+          this.isQuestionVisibleToParticipants = false;
+        })
+      );
+
+      this.subscriptions.push(
+        this.lobbyService.onAnswerHidden().subscribe(() => {
+          console.log('Hiding answer from participant');
+          this.isAnswerVisibleToParticipants = false;
+          // No need to restore the blur when hidden
+        })
+      );
+    }
   }
 
   ngAfterViewInit() {
@@ -434,6 +452,37 @@ export class GameComponent implements OnInit, OnDestroy, AfterViewInit {
       // Auto-unblur when sending to participants
       this.isAnswerBlurred = false;
       this.answerSentToParticipants = true; // Set flag when sent
+    }
+  }
+
+  // Replace toggleQuestionVisibility with an explicit setter
+  setQuestionVisibility(visible: boolean): void {
+    if (this.isModerator && this.lobbyCode) {
+      // Only update if state is actually changing
+      if (this.questionSentToParticipants !== visible) {
+        this.questionSentToParticipants = visible;
+
+        console.log('Moderator is setting question visibility:', visible);
+        this.lobbyService.toggleQuestionVisibility(this.lobbyCode, visible);
+      }
+    }
+  }
+
+  // Replace toggleAnswerVisibility with an explicit setter
+  setAnswerVisibility(visible: boolean): void {
+    if (this.isModerator && this.lobbyCode) {
+      // Only update if state is actually changing
+      if (this.answerSentToParticipants !== visible) {
+        this.answerSentToParticipants = visible;
+
+        console.log('Moderator is setting answer visibility:', visible);
+        this.lobbyService.toggleAnswerVisibility(this.lobbyCode, visible);
+
+        // Only auto-unblur when showing, not when hiding
+        if (visible) {
+          this.isAnswerBlurred = false;
+        }
+      }
     }
   }
 }

@@ -32,6 +32,7 @@
 
           <!-- Right navigation arrow - only visible to moderator -->
           <div class="nav-right-container" *ngIf="isModerator">
+            <!-- Next question button - at the top -->
             <button
               class="nav-arrow nav-arrow-right"
               [disabled]="
@@ -43,51 +44,74 @@
               <ng-icon name="typChevronRight"></ng-icon>
             </button>
 
-            <!-- Send Question button - now uses dynamic icon -->
-            <button
-              class="nav-arrow nav-arrow-action"
-              [disabled]="isAnimating"
-              (click)="sendQuestion()"
-              title="Frage an Teilnehmer senden"
-            >
-              <ng-icon
-                [name]="
-                  questionSentToParticipants
-                    ? 'phosphorEyeSlash'
-                    : 'phosphorEye'
-                "
-              ></ng-icon>
-            </button>
+            <!-- Eye buttons in a row below the next button -->
+            <div class="eye-buttons-row">
+              <!-- Hide button (left) -->
+              <button
+                class="nav-arrow nav-arrow-action hide-eye"
+                [class.active]="!questionSentToParticipants"
+                [disabled]="isAnimating || !questionSentToParticipants"
+                (click)="setQuestionVisibility(false)"
+                title="Frage ausblenden"
+              >
+                <ng-icon name="phosphorEyeSlash"></ng-icon>
+              </button>
+
+              <!-- Show button (right, aligned beneath next button) -->
+              <button
+                class="nav-arrow nav-arrow-action show-eye"
+                [class.active]="questionSentToParticipants"
+                [disabled]="isAnimating || questionSentToParticipants"
+                (click)="setQuestionVisibility(true)"
+                title="Frage an Teilnehmer senden"
+              >
+                <ng-icon name="phosphorEye"></ng-icon>
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Answer section - visible for moderator always, for participants only when sent -->
+      <!-- Answer section - exactly match question-content structure -->
+      <div class="answer-container"></div>
       <div
         *ngIf="isModerator || isAnswerVisibleToParticipants"
         class="question-answer"
         [class.blurred]="isAnswerBlurred"
         (click)="toggleAnswerBlur()"
       >
-        <!-- Show correct answer -->
-        <div class="correct-answer-container">
+        <!-- Left space - match nav-left-container structure -->
+        <div class="answer-left-container"></div>
+
+        <!-- Center answer text - match question-text structure -->
+        <div class="correct-answer-text">
           Antwort: {{ currentQuestion.correctAnswer }}
         </div>
 
-        <!-- Send Answer button - now uses dynamic icon -->
-        <button
-          *ngIf="isModerator"
-          class="nav-arrow nav-answer-action"
-          [disabled]="isAnimating"
-          (click)="sendAnswer()"
-          title="Antwort an Teilnehmer senden"
-        >
-          <ng-icon
-            [name]="
-              answerSentToParticipants ? 'phosphorEyeSlash' : 'phosphorEye'
-            "
-          ></ng-icon>
-        </button>
+        <!-- Right space - match nav-right-container structure exactly -->
+        <div class="answer-right-container" *ngIf="isModerator">
+          <!-- Eye buttons row - match the exact structure in question-content -->
+          <div class="answer-eye-buttons-row">
+            <button
+              class="nav-arrow nav-answer-action hide-eye"
+              [class.active]="!answerSentToParticipants"
+              [disabled]="isAnimating || !answerSentToParticipants"
+              (click)="setAnswerVisibility(false)"
+              title="Antwort ausblenden"
+            >
+              <ng-icon name="phosphorEyeSlash"></ng-icon>
+            </button>
+            <button
+              class="nav-arrow nav-answer-action show-eye"
+              [class.active]="answerSentToParticipants"
+              [disabled]="isAnimating || answerSentToParticipants"
+              (click)="setAnswerVisibility(true)"
+              title="Antwort an Teilnehmer senden"
+            >
+              <ng-icon name="phosphorEye"></ng-icon>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 

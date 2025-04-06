@@ -42,6 +42,10 @@ export class LobbyService {
   // Add game state subject
   private gameStateSubject = new BehaviorSubject<GameState | null>(null);
 
+  // Add subjects for question and answer hidden events
+  private questionHiddenSubject = new Subject<void>();
+  private answerHiddenSubject = new Subject<void>();
+
   private currentLobby: Lobby | null = null;
   private socket!: Socket;
 
@@ -132,6 +136,29 @@ export class LobbyService {
       }
       this.answerVisibleSubject.next();
     });
+
+    // Add listeners for question and answer hidden events
+    this.socket.on('game:questionHidden', () => {
+      console.log('Question hidden event received');
+      if (this.gameStateSubject.value) {
+        this.gameStateSubject.next({
+          ...this.gameStateSubject.value,
+          isQuestionVisible: false,
+        });
+      }
+      this.questionHiddenSubject.next();
+    });
+
+    this.socket.on('game:answerHidden', () => {
+      console.log('Answer hidden event received');
+      if (this.gameStateSubject.value) {
+        this.gameStateSubject.next({
+          ...this.gameStateSubject.value,
+          isAnswerVisible: false,
+        });
+      }
+      this.answerHiddenSubject.next();
+    });
   }
 
   public joinLobby(username: string, lobbyCode?: string) {
@@ -212,6 +239,32 @@ export class LobbyService {
     this.socket.emit('game:sendAnswer', lobbyCode);
   }
 
+  // Methods to emit hide events
+  hideQuestion(lobbyCode: string): void {
+    this.socket.emit('game:hideQuestion', lobbyCode);
+  }
+
+  hideAnswer(lobbyCode: string): void {
+    this.socket.emit('game:hideAnswer', lobbyCode);
+  }
+
+  // Methods to toggle visibility of questions and answers
+  toggleQuestionVisibility(lobbyCode: string, visible: boolean): void {
+    if (visible) {
+      this.sendQuestion(lobbyCode);
+    } else {
+      this.hideQuestion(lobbyCode);
+    }
+  }
+
+  toggleAnswerVisibility(lobbyCode: string, visible: boolean): void {
+    if (visible) {
+      this.sendAnswer(lobbyCode);
+    } else {
+      this.hideAnswer(lobbyCode);
+    }
+  }
+
   // Methods to listen for events - updated to use the subjects
   onQuestionVisible(): Observable<void> {
     return this.questionVisibleSubject.asObservable();
@@ -219,6 +272,15 @@ export class LobbyService {
 
   onAnswerVisible(): Observable<void> {
     return this.answerVisibleSubject.asObservable();
+  }
+
+  // Observables for hidden events
+  onQuestionHidden(): Observable<void> {
+    return this.questionHiddenSubject.asObservable();
+  }
+
+  onAnswerHidden(): Observable<void> {
+    return this.answerHiddenSubject.asObservable();
   }
 
   // Observables for game events

@@ -395,6 +395,7 @@ io.on("connection", (socket) => {
       }
     }
   });
+
   socket.on("game:end", (lobbyCode) => {
     console.log("Game ended in lobby:", lobbyCode);
     const foundUser = findUserBySocketId(socket.id);
@@ -448,6 +449,55 @@ io.on("connection", (socket) => {
       });
     } else {
       callback({ error: "Lobby not found" });
+    }
+  });
+
+  // Add new socket events for moderator to hide questions and answers
+  socket.on("game:hideQuestion", (lobbyCode) => {
+    console.log("Question hidden in lobby:", lobbyCode);
+    const foundUser = findUserBySocketId(socket.id);
+
+    if (foundUser) {
+      const lobby = lobbys.find((lobby) => lobby.lobbyCode === lobbyCode);
+      if (lobby && lobby.moderator.username === foundUser.username) {
+        // Update game state
+        lobby.gameState.isQuestionVisible = false;
+
+        // Broadcast to everyone in the lobby except sender
+        socket.to(lobbyCode).emit("game:questionHidden");
+
+        // Log event in lobby history
+        addEventToLobbyEventHistory(
+          lobbyCode,
+          "game:questionHidden",
+          foundUser.username,
+          {}
+        );
+      }
+    }
+  });
+
+  socket.on("game:hideAnswer", (lobbyCode) => {
+    console.log("Answer hidden in lobby:", lobbyCode);
+    const foundUser = findUserBySocketId(socket.id);
+
+    if (foundUser) {
+      const lobby = lobbys.find((lobby) => lobby.lobbyCode === lobbyCode);
+      if (lobby && lobby.moderator.username === foundUser.username) {
+        // Update game state
+        lobby.gameState.isAnswerVisible = false;
+
+        // Broadcast to everyone in the lobby except sender
+        socket.to(lobbyCode).emit("game:answerHidden");
+
+        // Log event in lobby history
+        addEventToLobbyEventHistory(
+          lobbyCode,
+          "game:answerHidden",
+          foundUser.username,
+          {}
+        );
+      }
     }
   });
 
