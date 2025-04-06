@@ -8,124 +8,182 @@
       'animate-in-left': isAnimatingIn && animationDirection === 'prev'
     }"
   >
-    <div class="game-view-container">
+    <!-- Question container - hidden for participants until sent by moderator -->
+    <div
+      class="game-view-container"
+      *ngIf="isModerator || isQuestionVisibleToParticipants"
+    >
       <div class="game-info">
         <div class="question-content">
           <!-- Left navigation arrow - only visible to moderator -->
-          <button
-            *ngIf="isModerator"
-            class="nav-arrow nav-arrow-left"
-            [disabled]="currentQuestionIndex === 0 || isAnimating"
-            (click)="previousQuestion()"
-          >
-            <ng-icon name="typChevronLeft"></ng-icon>
-          </button>
+          <div class="nav-left-container" *ngIf="isModerator">
+            <button
+              class="nav-arrow nav-arrow-left"
+              [disabled]="currentQuestionIndex === 0 || isAnimating"
+              (click)="previousQuestion()"
+            >
+              <ng-icon name="typChevronLeft"></ng-icon>
+            </button>
+            <!-- Empty div to match the structure of the right container -->
+            <div class="nav-placeholder"></div>
+          </div>
 
           <p class="question-text">{{ currentQuestion.question }}</p>
 
           <!-- Right navigation arrow - only visible to moderator -->
-          <button
-            *ngIf="isModerator"
-            class="nav-arrow nav-arrow-right"
-            [disabled]="
-              currentQuestionIndex === gameData.questions.length - 1 ||
-              isAnimating
-            "
-            (click)="nextQuestion()"
-          >
-            <ng-icon name="typChevronRight"></ng-icon>
-          </button>
+          <div class="nav-right-container" *ngIf="isModerator">
+            <button
+              class="nav-arrow nav-arrow-right"
+              [disabled]="
+                currentQuestionIndex === gameData.questions.length - 1 ||
+                isAnimating
+              "
+              (click)="nextQuestion()"
+            >
+              <ng-icon name="typChevronRight"></ng-icon>
+            </button>
+
+            <!-- Send Question button - now uses dynamic icon -->
+            <button
+              class="nav-arrow nav-arrow-action"
+              [disabled]="isAnimating"
+              (click)="sendQuestion()"
+              title="Frage an Teilnehmer senden"
+            >
+              <ng-icon
+                [name]="
+                  questionSentToParticipants
+                    ? 'phosphorEyeSlash'
+                    : 'phosphorEye'
+                "
+              ></ng-icon>
+            </button>
+          </div>
         </div>
       </div>
 
-      <!-- Replace the counter with correct answer / counter based on role -->
+      <!-- Answer section - visible for moderator always, for participants only when sent -->
       <div
-        *ngIf="isModerator"
+        *ngIf="isModerator || isAnswerVisibleToParticipants"
         class="question-answer"
         [class.blurred]="isAnswerBlurred"
         (click)="toggleAnswerBlur()"
       >
-        <!-- Show correct answer for moderators -->
+        <!-- Show correct answer -->
         <div class="correct-answer-container">
           Antwort: {{ currentQuestion.correctAnswer }}
         </div>
+
+        <!-- Send Answer button - now uses dynamic icon -->
+        <button
+          *ngIf="isModerator"
+          class="nav-arrow nav-answer-action"
+          [disabled]="isAnimating"
+          (click)="sendAnswer()"
+          title="Antwort an Teilnehmer senden"
+        >
+          <ng-icon
+            [name]="
+              answerSentToParticipants ? 'phosphorEyeSlash' : 'phosphorEye'
+            "
+          ></ng-icon>
+        </button>
       </div>
     </div>
 
-    <!-- Updated multiple choice section with confirmation button -->
-    <div
-      class="options-container"
-      *ngIf="currentQuestion.type === 'multipleChoice'"
-    >
-      <div class="options-grid">
-        <div class="option-btn" *ngFor="let option of currentQuestion.options">
-          <p-button
-            [outlined]="selectedAnswer !== option"
-            (onClick)="selectAnswer(option)"
-            styleClass="w-full"
-            [disabled]="multipleChoiceSubmitted"
+    <!-- Remove the old moderator controls section -->
+
+    <!-- Game question options - only show when question is visible -->
+    <ng-container *ngIf="isModerator || isQuestionVisibleToParticipants">
+      <!-- Updated multiple choice section -->
+      <div
+        class="options-container"
+        *ngIf="currentQuestion.type === 'multipleChoice'"
+      >
+        <div class="options-grid">
+          <div
+            class="option-btn"
+            *ngFor="let option of currentQuestion.options"
           >
-            {{ option }}
-          </p-button>
+            <p-button
+              [outlined]="selectedAnswer !== option"
+              (onClick)="selectAnswer(option)"
+              styleClass="w-full"
+              [disabled]="multipleChoiceSubmitted"
+            >
+              {{ option }}
+            </p-button>
+          </div>
         </div>
+
+        <!-- Add confirm button -->
+        <button
+          class="confirm-button"
+          [class.submitted]="multipleChoiceSubmitted"
+          (click)="confirmMultipleChoice()"
+          [disabled]="!selectedAnswer"
+        >
+          <ng-icon
+            [name]="
+              multipleChoiceSubmitted
+                ? 'phosphorCheckFatFill'
+                : 'phosphorCheckFat'
+            "
+          ></ng-icon>
+        </button>
       </div>
 
-      <!-- Add confirm button -->
-      <button
-        class="confirm-button"
-        [class.submitted]="multipleChoiceSubmitted"
-        (click)="confirmMultipleChoice()"
-        [disabled]="!selectedAnswer"
+      <!-- Buzzer section -->
+      <div class="buzzer-container" *ngIf="currentQuestion.type === 'buzzer'">
+        <app-buzzer
+          [lobbyCode]="lobbyCode"
+          [isModerator]="isModerator"
+          size="large"
+        ></app-buzzer>
+      </div>
+
+      <!-- Estimation section -->
+      <div
+        class="estimation-container"
+        *ngIf="currentQuestion.type === 'estimation'"
       >
-        <ng-icon
-          [name]="
-            multipleChoiceSubmitted
-              ? 'phosphorCheckFatFill'
-              : 'phosphorCheckFat'
-          "
-        ></ng-icon>
-      </button>
-    </div>
+        <div class="estimation-input-container">
+          <textarea
+            #estimationInput
+            class="estimation-input"
+            placeholder="Schätzung..."
+            [disabled]="estimationSubmitted"
+            (input)="adjustFontSize(estimationInput)"
+            maxlength="20"
+          ></textarea>
+        </div>
 
-    <div class="buzzer-container" *ngIf="currentQuestion.type === 'buzzer'">
-      <app-buzzer
-        [lobbyCode]="lobbyCode"
-        [isModerator]="true"
-        size="large"
-      ></app-buzzer>
-    </div>
+        <!-- Confirm button for estimation -->
+        <button
+          class="confirm-button"
+          [class.submitted]="estimationSubmitted"
+          (click)="submitEstimation(estimationInput.value)"
+          [disabled]="!estimationInput.value || estimationSubmitted"
+        >
+          <ng-icon
+            [name]="
+              estimationSubmitted ? 'phosphorCheckFatFill' : 'phosphorCheckFat'
+            "
+          ></ng-icon>
+        </button>
+      </div>
+    </ng-container>
 
+    <!-- Show waiting message when question is not visible -->
     <div
-      class="estimation-container"
-      *ngIf="currentQuestion.type === 'estimation'"
+      class="waiting-message"
+      *ngIf="!isModerator && !isQuestionVisibleToParticipants"
     >
-      <div class="estimation-input-container">
-        <textarea
-          type="text"
-          #estimationInput
-          class="estimation-input"
-          placeholder="Schätzung..."
-          pTextarea
-          (input)="adjustFontSize(estimationInput)"
-          [disabled]="estimationSubmitted"
-          autofocus
-        ></textarea>
-      </div>
-
-      <button
-        class="confirm-button"
-        [class.submitted]="estimationSubmitted"
-        (click)="submitEstimation(estimationInput.value)"
-      >
-        <ng-icon
-          [name]="
-            estimationSubmitted ? 'phosphorCheckFatFill' : 'phosphorCheckFat'
-          "
-        ></ng-icon>
-      </button>
+      <p>Bitte warte, bis der Moderator die Frage freigegeben hat.</p>
     </div>
   </div>
 
+  <!-- Loading state -->
   <div class="loading-info" *ngIf="!gameData">
     <p>Spielinformationen werden geladen...</p>
   </div>

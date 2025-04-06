@@ -27,6 +27,7 @@ export interface Lobby {
   currentBuzzerState?: BuzzerState;
   eventHistory?: EventHistory[];
   isModerator?: boolean;
+  gameState?: GameState; // Add game state to the lobby interface
 }
 
 export interface JoinLobbyResponse {
@@ -41,4 +42,11 @@ export interface UserListUpdate {
   lobbyCode: string;
   users: User[];
   moderator: User;
+}
+
+export interface GameState {
+  isGameActive: boolean;
+  currentQuestionIndex: number;
+  isQuestionVisible: boolean;
+  isAnswerVisible: boolean;
 }

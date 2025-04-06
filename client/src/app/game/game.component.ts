@@ -22,7 +22,11 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { phosphorCheckFatFill } from '@ng-icons/phosphor-icons/fill';
-import { phosphorCheckFat } from '@ng-icons/phosphor-icons/regular';
+import {
+  phosphorCheckFat,
+  phosphorEye,
+  phosphorEyeSlash,
+} from '@ng-icons/phosphor-icons/regular';
 
 @Component({
   selector: 'app-game',
@@ -43,6 +47,8 @@ import { phosphorCheckFat } from '@ng-icons/phosphor-icons/regular';
       typChevronRight,
       phosphorCheckFatFill,
       phosphorCheckFat,
+      phosphorEye,
+      phosphorEyeSlash,
     }),
   ],
   templateUrl: './game.component.html',
@@ -77,6 +83,14 @@ export class GameComponent implements OnInit, OnDestroy, AfterViewInit {
   // Add a state variable to track multiple choice submission status
   multipleChoiceSubmitted = false;
 
+  // Add new properties to track visibility states
+  isQuestionVisibleToParticipants = false; // Default to false for everyone
+  isAnswerVisibleToParticipants = false; // Default to false for everyone
+
+  // Add these properties to track eye icon state
+  questionSentToParticipants = false;
+  answerSentToParticipants = false;
+
   @ViewChild('estimationInput') estimationInputRef?: ElementRef;
 
   get currentQuestion(): Question | undefined {
@@ -91,14 +105,21 @@ export class GameComponent implements OnInit, OnDestroy, AfterViewInit {
   ) {}
 
   ngOnInit(): void {
+    // If the user is a moderator, make questions visible by default
+    if (this.isModerator) {
+      this.isQuestionVisibleToParticipants = true;
+    }
+
     // If lobbyCode is not provided as input, try to get it from route params
     if (!this.lobbyCode) {
       this.route.params.subscribe((params) => {
         this.lobbyCode = params['lobbyCode'];
         this.loadGameData();
+        this.loadGameState(); // Load game state after loading game data
       });
     } else {
       this.loadGameData();
+      this.loadGameState(); // Load game state after loading game data
     }
 
     // Listen for question change events from service
@@ -118,12 +139,47 @@ export class GameComponent implements OnInit, OnDestroy, AfterViewInit {
           // Animate the question change
           this.animateQuestionChange(() => {
             this.currentQuestionIndex = questionIndex;
+
+            // Reset visibility states for new question
+            this.isQuestionVisibleToParticipants = false;
+            this.isAnswerVisibleToParticipants = false;
+
             // Emit the change back up to the lobby component
             this.questionChanged.emit(this.currentQuestionIndex);
           });
         }
       })
     );
+
+    // Make sure to listen for game start event to initialize properly
+    this.subscriptions.push(
+      this.lobbyService.onGameStarted().subscribe(() => {
+        console.log('Game started event received');
+        // For participants, make sure questions start hidden
+        if (!this.isModerator) {
+          this.isQuestionVisibleToParticipants = false;
+          this.isAnswerVisibleToParticipants = false;
+        }
+      })
+    );
+
+    // Add listeners for question and answer visibility events
+    if (!this.isModerator) {
+      this.subscriptions.push(
+        this.lobbyService.onQuestionVisible().subscribe(() => {
+          console.log('Making question visible to participant');
+          this.isQuestionVisibleToParticipants = true;
+        })
+      );
+
+      this.subscriptions.push(
+        this.lobbyService.onAnswerVisible().subscribe(() => {
+          console.log('Making answer visible to participant');
+          this.isAnswerVisibleToParticipants = true;
+          this.isAnswerBlurred = false; // Auto-unblur when moderator sends answer
+        })
+      );
+    }
   }
 
   ngAfterViewInit() {
@@ -157,6 +213,44 @@ export class GameComponent implements OnInit, OnDestroy, AfterViewInit {
       // Emit initial question index
       this.questionChanged.emit(this.currentQuestionIndex);
     }
+  }
+
+  // Add method to load game state
+  loadGameState(): void {
+    if (!this.lobbyCode) return;
+
+    // Get current game state when component initializes
+    this.lobbyService.getGameState(this.lobbyCode).subscribe((gameState) => {
+      if (gameState) {
+        console.log('Received game state in component:', gameState);
+
+        // Apply state from server
+        if (gameState.isGameActive) {
+          // Set the current question index
+          this.currentQuestionIndex = gameState.currentQuestionIndex;
+
+          // Update visibility flags
+          if (!this.isModerator) {
+            // Only for participants
+            this.isQuestionVisibleToParticipants = gameState.isQuestionVisible;
+            this.isAnswerVisibleToParticipants = gameState.isAnswerVisible;
+          }
+
+          // Update UI state based on visibility
+          if (gameState.isQuestionVisible) {
+            this.questionSentToParticipants = true;
+          }
+
+          if (gameState.isAnswerVisible) {
+            this.answerSentToParticipants = true;
+            this.isAnswerBlurred = false; // Unblur the answer if it's visible
+          }
+
+          // Emit the current question index
+          this.questionChanged.emit(this.currentQuestionIndex);
+        }
+      }
+    });
   }
 
   nextQuestion(): void {
@@ -204,6 +298,19 @@ export class GameComponent implements OnInit, OnDestroy, AfterViewInit {
     this.isAnimating = true;
     this.isAnimatingOut = true;
     this.isAnswerBlurred = true; // Reset blur state for new question
+
+    // If user is moderator, we keep the question visible by default
+    if (!this.isModerator) {
+      this.isQuestionVisibleToParticipants = false;
+    }
+
+    // Reset answer visibility for all users
+    this.isAnswerVisibleToParticipants = false;
+
+    // Reset the sent flags when changing questions
+    this.questionSentToParticipants = false;
+    this.answerSentToParticipants = false;
+
     this.selectedAnswer = null; // Reset selected answer for new question
     this.estimationSubmitted = false; // Reset estimation submission state
     this.multipleChoiceSubmitted = false; // Reset multiple choice submission state
@@ -309,5 +416,24 @@ export class GameComponent implements OnInit, OnDestroy, AfterViewInit {
         this.estimationInputRef.nativeElement.focus();
       }
     }, 500);
+  }
+
+  // Add methods for moderator to send questions and answers
+  sendQuestion(): void {
+    if (this.isModerator && this.lobbyCode) {
+      console.log('Moderator is sending question to participants');
+      this.lobbyService.sendQuestion(this.lobbyCode);
+      this.questionSentToParticipants = true; // Set flag when sent
+    }
+  }
+
+  sendAnswer(): void {
+    if (this.isModerator && this.lobbyCode) {
+      console.log('Moderator is sending answer to participants');
+      this.lobbyService.sendAnswer(this.lobbyCode);
+      // Auto-unblur when sending to participants
+      this.isAnswerBlurred = false;
+      this.answerSentToParticipants = true; // Set flag when sent
+    }
   }
 }

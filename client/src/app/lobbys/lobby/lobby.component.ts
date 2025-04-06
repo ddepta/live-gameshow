@@ -72,6 +72,19 @@ export class LobbyComponent implements OnInit, OnDestroy {
         this.lobby = result;
         this.eventHistory = result.eventHistory ?? [];
         console.log('Lobby loaded:', result);
+
+        // Check for active game state and update UI accordingly
+        if (result.gameState && result.gameState.isGameActive) {
+          console.log('Game is active, showing game interface');
+          // Load the game data
+          this.gameData = this.gameService.getGameData();
+
+          // Set to game started to show the game UI
+          this.isGameStarted = true;
+
+          // Set the current question index from game state
+          this.currentQuestionIndex = result.gameState.currentQuestionIndex;
+        }
       });
     });
 

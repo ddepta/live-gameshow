@@ -298,6 +298,10 @@ io.on("connection", (socket) => {
     if (foundUser) {
       const lobby = lobbys.find((lobby) => lobby.lobbyCode === lobbyCode);
       if (lobby && lobby.moderator.username === foundUser.username) {
+        // Update game state
+        lobby.gameState.isGameActive = true;
+        lobby.gameState.currentQuestionIndex = 0;
+
         // Broadcast game start to everyone in the lobby except sender
         socket.to(lobbyCode).emit("game:started");
 
@@ -307,6 +311,55 @@ io.on("connection", (socket) => {
           "game:started",
           foundUser.username,
           ""
+        );
+      }
+    }
+  });
+
+  // Add new socket events for moderator to control question and answer visibility
+  socket.on("game:sendQuestion", (lobbyCode) => {
+    console.log("Question sent in lobby:", lobbyCode);
+    const foundUser = findUserBySocketId(socket.id);
+
+    if (foundUser) {
+      const lobby = lobbys.find((lobby) => lobby.lobbyCode === lobbyCode);
+      if (lobby && lobby.moderator.username === foundUser.username) {
+        // Update game state
+        lobby.gameState.isQuestionVisible = true;
+
+        // Broadcast to everyone in the lobby except sender
+        socket.to(lobbyCode).emit("game:questionVisible");
+
+        // Log event in lobby history
+        addEventToLobbyEventHistory(
+          lobbyCode,
+          "game:questionVisible",
+          foundUser.username,
+          {}
+        );
+      }
+    }
+  });
+
+  socket.on("game:sendAnswer", (lobbyCode) => {
+    console.log("Answer sent in lobby:", lobbyCode);
+    const foundUser = findUserBySocketId(socket.id);
+
+    if (foundUser) {
+      const lobby = lobbys.find((lobby) => lobby.lobbyCode === lobbyCode);
+      if (lobby && lobby.moderator.username === foundUser.username) {
+        // Update game state
+        lobby.gameState.isAnswerVisible = true;
+
+        // Broadcast to everyone in the lobby except sender
+        socket.to(lobbyCode).emit("game:answerVisible");
+
+        // Log event in lobby history
+        addEventToLobbyEventHistory(
+          lobbyCode,
+          "game:answerVisible",
+          foundUser.username,
+          {}
         );
       }
     }
@@ -324,6 +377,11 @@ io.on("connection", (socket) => {
     if (foundUser) {
       const lobby = lobbys.find((lobby) => lobby.lobbyCode === lobbyCode);
       if (lobby && lobby.moderator.username === foundUser.username) {
+        // Update game state
+        lobby.gameState.currentQuestionIndex = questionIndex;
+        lobby.gameState.isQuestionVisible = false; // Reset visibility on question change
+        lobby.gameState.isAnswerVisible = false;
+
         // Broadcast question change to everyone in the lobby except sender
         socket.to(lobbyCode).emit("game:question:change", questionIndex);
 
@@ -344,6 +402,11 @@ io.on("connection", (socket) => {
     if (foundUser) {
       const lobby = lobbys.find((lobby) => lobby.lobbyCode === lobbyCode);
       if (lobby && lobby.moderator.username === foundUser.username) {
+        // Update game state
+        lobby.gameState.isGameActive = false;
+        lobby.gameState.isQuestionVisible = false;
+        lobby.gameState.isAnswerVisible = false;
+
         // Change from io.in to socket.to to avoid sending to sender,
         // and fix event name to match what client is listening for
         socket.to(lobbyCode).emit("game:ended");
@@ -367,6 +430,24 @@ io.on("connection", (socket) => {
       }
     } else {
       console.log("Unknown user tried to end game");
+    }
+  });
+
+  // Add new handler for getting game state
+  socket.on("game:getState", (lobbyCode, callback) => {
+    console.log("Game state requested for lobby:", lobbyCode);
+
+    const lobby = lobbys.find((lobby) => lobby.lobbyCode === lobbyCode);
+    if (lobby) {
+      // Return the current game state
+      callback({
+        isGameActive: lobby.gameState.isGameActive,
+        currentQuestionIndex: lobby.gameState.currentQuestionIndex,
+        isQuestionVisible: lobby.gameState.isQuestionVisible,
+        isAnswerVisible: lobby.gameState.isAnswerVisible,
+      });
+    } else {
+      callback({ error: "Lobby not found" });
     }
   });
 
@@ -397,6 +478,7 @@ io.on("connection", (socket) => {
     return false;
   }
 
+  // Update the lobby structure to include game state
   function handleLobby(lobbyCode, username, callback) {
     if (lobbyCode) {
       console.log("handleLobby lobbycode", lobbyCode, username);
@@ -424,6 +506,13 @@ io.on("connection", (socket) => {
         isActive: true,
         currentBuzzerState: currentBuzzerState,
         eventHistory: [currentBuzzerState],
+        // Add game state tracking
+        gameState: {
+          isGameActive: false,
+          currentQuestionIndex: 0,
+          isQuestionVisible: false,
+          isAnswerVisible: false,
+        },
       };
 
       lobbys.push(lobby);
@@ -555,7 +644,12 @@ io.on("connection", (socket) => {
       lobby.users.map((u) => u.username)
     );
 
-    return { ...lobby, isModerator };
+    return {
+      ...lobby,
+      isModerator,
+      // Include game state in response
+      gameState: lobby.gameState,
+    };
   }
 
   function emitMessage(recipient, event, data) {
