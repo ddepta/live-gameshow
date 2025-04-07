@@ -133,6 +133,13 @@ h1 {
     width: 100%;
   }
 }
+::ng-deep .end-game-btn {
+  margin-top: 50px;
+  width: 100%;
+  .p-button {
+    width: 100%;
+  }
+}
 
 .game-wrapper {
   flex: 1;

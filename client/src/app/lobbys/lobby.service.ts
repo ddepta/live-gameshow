@@ -19,6 +19,20 @@ export interface GameState {
   isAnswerVisible: boolean;
 }
 
+// Add these new interfaces
+export interface SubmittedAnswer {
+  username: string;
+  questionIndex: number;
+  answer: string;
+  type: 'multipleChoice' | 'estimation';
+  timestamp: number;
+}
+
+export interface AnswerUpdate {
+  lobbyCode: string;
+  answers: SubmittedAnswer[];
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -45,6 +59,9 @@ export class LobbyService {
   // Add subjects for question and answer hidden events
   private questionHiddenSubject = new Subject<void>();
   private answerHiddenSubject = new Subject<void>();
+
+  // Override the answersSubject with a new instance to ensure changes are detected
+  private answersSubject = new BehaviorSubject<SubmittedAnswer[]>([]);
 
   private currentLobby: Lobby | null = null;
   private socket!: Socket;
@@ -158,6 +175,40 @@ export class LobbyService {
         });
       }
       this.answerHiddenSubject.next();
+    });
+
+    // Enhanced listener for submitted answers - with more explicit handling
+    this.socket.on('game:answers', (update: AnswerUpdate) => {
+      console.log('Received answer update with payload:', update);
+
+      if (
+        this.currentLobby &&
+        this.currentLobby.lobbyCode === update.lobbyCode
+      ) {
+        console.log('Processing answers for current lobby');
+
+        // Extract the answers and ensure we're dealing with a proper array
+        const answers = Array.isArray(update.answers) ? update.answers : [];
+
+        // Log each answer for debugging
+        answers.forEach((answer) => {
+          console.log(
+            `Answer in service - username: ${answer.username}, question: ${answer.questionIndex}, value: ${answer.answer}`
+          );
+        });
+
+        // Create a new array to trigger change detection
+        const newAnswers = [...answers];
+
+        // Explicitly set the new value
+        this.answersSubject.next(newAnswers);
+
+        // Log the current value of the subject
+        console.log(
+          'Current value of answersSubject:',
+          this.answersSubject.value
+        );
+      }
     });
   }
 
@@ -316,5 +367,40 @@ export class LobbyService {
   // Method to access current game state
   public getCurrentGameState(): GameState | null {
     return this.gameStateSubject.value;
+  }
+
+  // Method to submit answers
+  submitAnswer(
+    lobbyCode: string,
+    questionIndex: number,
+    answer: string,
+    type: 'multipleChoice' | 'estimation'
+  ): void {
+    console.log('Submitting answer:', {
+      lobbyCode,
+      questionIndex,
+      answer,
+      type,
+    });
+    this.socket.emit(
+      'game:submitAnswer',
+      lobbyCode,
+      questionIndex,
+      answer,
+      type
+    );
+  }
+
+  // Enhanced method for getting answers
+  getAnswers(): Observable<SubmittedAnswer[]> {
+    console.log('getAnswers called, current value:', this.answersSubject.value);
+
+    // Force a new emission with the current value to ensure subscribers receive it
+    setTimeout(() => {
+      const currentValue = this.answersSubject.value;
+      this.answersSubject.next([...currentValue]);
+    }, 0);
+
+    return this.answersSubject.asObservable();
   }
 }

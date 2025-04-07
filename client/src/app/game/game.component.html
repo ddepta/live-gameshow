@@ -77,14 +77,16 @@
       <div
         *ngIf="isModerator || isAnswerVisibleToParticipants"
         class="question-answer"
-        [class.blurred]="isAnswerBlurred"
-        (click)="toggleAnswerBlur()"
       >
         <!-- Left space - match nav-left-container structure -->
         <div class="answer-left-container"></div>
 
         <!-- Center answer text - match question-text structure -->
-        <div class="correct-answer-text">
+        <div
+          class="correct-answer-text"
+          [class.blurred]="isAnswerBlurred"
+          (click)="toggleAnswerBlur()"
+        >
           Antwort: {{ currentQuestion.correctAnswer }}
         </div>
 
@@ -115,33 +117,59 @@
       </div>
     </div>
 
-    <!-- Remove the old moderator controls section -->
-
     <!-- Game question options - only show when question is visible -->
     <ng-container *ngIf="isModerator || isQuestionVisibleToParticipants">
-      <!-- Updated multiple choice section -->
+      <!-- Updated multiple choice section with conditional blur -->
+
+      <!-- Updated multiple choice section with conditional blur -->
       <div
         class="options-container"
         *ngIf="currentQuestion.type === 'multipleChoice'"
+        [class.moderator-content-blurred]="
+          isModerator && !questionSentToParticipants
+        "
       >
         <div class="options-grid">
           <div
             class="option-btn"
             *ngFor="let option of currentQuestion.options"
+            [class.moderator-option]="isModerator"
+            [class.correct-answer]="
+              isModerator && option === currentQuestion.correctAnswer
+            "
           >
             <p-button
-              [outlined]="selectedAnswer !== option"
-              (onClick)="selectAnswer(option)"
+              [outlined]="
+                (isModerator && isAnswerBlurred) ||
+                (isModerator &&
+                  option !== currentQuestion.correctAnswer &&
+                  !isAnswerBlurred) ||
+                (!isModerator && selectedAnswer !== option)
+              "
+              (onClick)="!isModerator && selectAnswer(option)"
               styleClass="w-full"
               [disabled]="multipleChoiceSubmitted"
             >
-              {{ option }}
+              <span class="option-content">
+                {{ option }}
+                <!-- Add user avatars inside the button -->
+                <span *ngIf="isModerator" class="inline-user-avatars">
+                  <span
+                    *ngFor="let user of getUsersForOption(option)"
+                    class="user-avatar"
+                    [title]="user.username"
+                  >
+                    {{ user.username.charAt(0).toUpperCase() }}
+                  </span>
+                </span>
+              </span>
             </p-button>
           </div>
         </div>
 
-        <!-- Add confirm button -->
+        <!-- Multiple choice section confirm button - hide for moderator -->
         <button
+          *ngIf="!isModerator"
           class="confirm-button"
           [class.submitted]="multipleChoiceSubmitted"
           (click)="confirmMultipleChoice()"
@@ -157,8 +185,14 @@
         </button>
       </div>
 
-      <!-- Buzzer section -->
-      <div class="buzzer-container" *ngIf="currentQuestion.type === 'buzzer'">
+      <!-- Buzzer section with conditional blur -->
+      <div
+        class="buzzer-container"
+        *ngIf="currentQuestion.type === 'buzzer'"
+        [class.moderator-content-blurred]="
+          isModerator && !questionSentToParticipants
+        "
+      >
         <app-buzzer
           [lobbyCode]="lobbyCode"
           [isModerator]="isModerator"
@@ -166,37 +200,79 @@
         ></app-buzzer>
       </div>
 
-      <!-- Estimation section -->
+      <!-- Estimation section with conditional blur -->
       <div
         class="estimation-container"
         *ngIf="currentQuestion.type === 'estimation'"
+        [class.moderator-content-blurred]="
+          isModerator && !questionSentToParticipants
+        "
       >
-        <div class="estimation-input-container">
-          <textarea
-            #estimationInput
-            class="estimation-input"
-            placeholder="Schätzung..."
-            [disabled]="estimationSubmitted"
-            (input)="adjustFontSize(estimationInput)"
-            maxlength="20"
-          ></textarea>
-        </div>
+        <!-- Participant view - completely separate from moderator view -->
+        <ng-container *ngIf="!isModerator">
+          <div class="estimation-input-container">
+            <textarea
+              #estimationInput
+              class="estimation-input"
+              placeholder="Schätzung..."
+              [disabled]="estimationSubmitted"
+              (input)="adjustFontSize(estimationInput)"
+            ></textarea>
+          </div>
 
-        <!-- Confirm button for estimation -->
-        <button
-          class="confirm-button"
-          [class.submitted]="estimationSubmitted"
-          (click)="submitEstimation(estimationInput.value)"
-          [disabled]="!estimationInput.value || estimationSubmitted"
-        >
-          <ng-icon
-            [name]="
-              estimationSubmitted ? 'phosphorCheckFatFill' : 'phosphorCheckFat'
-            "
-          ></ng-icon>
-        </button>
+          <button
+            class="confirm-button"
+            [class.submitted]="estimationSubmitted"
+            (click)="submitEstimation(estimationInput.value)"
+            [disabled]="!estimationInput.value || estimationSubmitted"
+          >
+            <ng-icon
+              [name]="
+                estimationSubmitted
+                  ? 'phosphorCheckFatFill'
+                  : 'phosphorCheckFat'
+              "
+            ></ng-icon>
+          </button>
+        </ng-container>
       </div>
     </ng-container>
+
+    <!-- Moderator view: Display submitted answers - only show for estimation questions -->
+    <div
+      class="submitted-answers-container"
+      *ngIf="isModerator && currentQuestion.type === 'estimation'"
+      [class.moderator-content-blurred]="
+        isModerator && !questionSentToParticipants
+      "
+    >
+      <h3 class="answers-heading">Eingegangene Antworten</h3>
+
+      <div
+        class="answers-list"
+        *ngIf="currentQuestionAnswers && currentQuestionAnswers.length > 0"
+      >
+        <div class="answer-item" *ngFor="let answer of currentQuestionAnswers">
+          <div class="answer-meta">
+            <div class="answer-user">{{ answer.username }}</div>
+            <div class="answer-type">
+              {{
+                answer.type === "multipleChoice"
+                  ? "Multiple Choice"
+                  : "Schätzung"
+              }}
+            </div>
+          </div>
+          <div class="answer-value">{{ answer.answer }}</div>
+        </div>
+      </div>
+      <div
+        class="no-answers"
+        *ngIf="!currentQuestionAnswers || currentQuestionAnswers.length === 0"
+      >
+        <p>Noch keine Antworten eingegangen.</p>
+      </div>
+    </div>
 
     <!-- Show waiting message when question is not visible -->
     <div

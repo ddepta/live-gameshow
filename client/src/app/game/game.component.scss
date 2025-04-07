@@ -96,7 +96,7 @@
   position: relative;
   transition: transform 0.4s ease, opacity 0.4s ease;
   display: grid;
-  grid-template-columns: 150px 1fr; // Three columns with exact widths
+  grid-template-columns: 110px 1fr 0 0 110px; // Three columns with exact widths
   align-items: center;
   justify-content: center;
 }
@@ -130,7 +130,6 @@
     opacity: 0.3;
     cursor: not-allowed;
   }
-
   ng-icon {
     font-size: 3rem;
   }
@@ -168,6 +167,7 @@
   align-items: center;
   gap: 5px;
   justify-content: center;
+  margin-right: 8px;
 }
 
 .nav-arrow-right {
@@ -179,11 +179,17 @@
   /* Right position in the row */
   /* Can be moved slightly right to align with the next button above */
   margin-left: 2px;
+  ng-icon {
+    font-size: 2rem;
+  }
 }
 
 .hide-eye {
   /* Left position in the row */
   margin-right: 2px;
+  ng-icon {
+    font-size: 2rem;
+  }
 }
 
 .nav-arrow-right {
@@ -458,10 +464,10 @@
   cursor: pointer;
   transition: filter 0.3s ease;
 
-  &.blurred {
+  .blurred {
     filter: blur(5px);
 
-    &:hover {
+    :hover {
       filter: blur(3px);
     }
   }
@@ -481,6 +487,8 @@
     line-height: 1.4;
     color: var(--p-surface-950);
     grid-column: 2; /* Place in middle column */
+    padding-top: 5px;
+    padding-bottom: 5px;
   }
 
   .answer-right-container {
@@ -504,6 +512,7 @@
       align-items: center;
       justify-content: center;
       gap: 5px;
+      margin-right: 8px;
     }
   }
 
@@ -670,3 +679,306 @@
   //   }
   // }
 }
+
+// Update the eye control buttons styles
+.eye-buttons-row,
+.answer-eye-buttons-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  justify-content: center;
+
+  .nav-arrow-action,
+  .nav-answer-action {
+    transition: all 0.3s ease;
+    opacity: 0.6; // Make inactive buttons more subdued
+    position: relative;
+
+    // Inactive state
+    &:not(.active):not(:disabled) {
+      cursor: pointer;
+
+      &:hover {
+        opacity: 0.9;
+        transform: scale(1.05);
+      }
+    }
+
+    // Active state - make it stand out
+    &.active {
+      opacity: 1;
+      transform: scale(1.15);
+      cursor: default;
+
+      // Add shadow effect to the SVG icon in active state
+      ::ng-deep svg {
+        width: 100%;
+        height: 100%;
+        filter: drop-shadow(0 0 1px var(--p-primary-200))
+          drop-shadow(0 0 1px var(--p-primary-200));
+      }
+    }
+
+    &:disabled {
+      opacity: 1;
+      color: var(--p-primary-400);
+      cursor: not-allowed;
+    }
+  }
+}
+
+.nav-arrow-action,
+.nav-answer-action {
+  justify-self: center;
+
+  &.show-eye.active {
+    color: var(--p-primary-color);
+  }
+
+  &.hide-eye.active {
+    color: var(--p-primary-color);
+  }
+}
+
+// Specifically style answer control buttons
+.answer-eye-buttons-row {
+  .nav-answer-action {
+    color: var(--p-surface-950);
+
+    &.active {
+      // For answer button active state
+      ::ng-deep svg {
+        filter: drop-shadow(0 0 1px var(--p-surface-950))
+          drop-shadow(0 0 1px var(--p-surface-950))
+          drop-shadow(0 0 6px var(--p-primary-600));
+      }
+    }
+
+    &:not(.active):not(:disabled):hover {
+      color: var(--p-surface-800);
+    }
+  }
+}
+
+/* Submitted answers display for moderator */
+.submitted-answers-container {
+  width: 60%;
+  margin: 20px auto;
+  padding: 15px;
+  background-color: var(--p-surface-900);
+  border-radius: 8px;
+  border: 2px solid var(--p-primary-400);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.answers-heading {
+  color: var(--p-primary-color);
+  font-size: 20px;
+  margin-bottom: 15px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.answers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.answer-item {
+  display: flex;
+  justify-content: space-between;
+  background-color: var(--p-surface-800);
+  padding: 12px 15px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+  border-left: 4px solid var(--p-primary-color);
+
+  &:hover {
+    background-color: var(--p-surface-700);
+  }
+}
+
+.answer-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.answer-user {
+  font-weight: bold;
+  color: var(--p-primary-300);
+}
+
+.answer-type {
+  font-size: 12px;
+  color: var(--p-primary-400);
+  margin-top: 3px;
+}
+
+.answer-value {
+  color: #fff;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+.no-answers {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 60px;
+  color: var(--p-primary-300);
+  font-style: italic;
+}
+
+// Add this to your existing styles
+
+.user-avatars-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 10px;
+  justify-content: center;
+}
+
+.user-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: #3498db;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+// Adjust option button layout to accommodate the avatars
+.option-btn {
+  position: relative;
+  margin-bottom: 15px;
+}
+
+// Update the option-content styling to accommodate inline avatars
+.option-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+// Update the user avatars to display inline
+.inline-user-avatars {
+  display: flex;
+  gap: 3px;
+  margin-left: 10px;
+}
+
+.user-avatar {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background-color: #3498db;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+// Make sure options are large enough to accommodate avatars
+:host ::ng-deep .option-btn {
+  .p-button {
+    min-height: 60px;
+
+    // Fix button content alignment
+    .p-button-label {
+      width: 100%;
+    }
+  }
+}
+
+// Add styling for the moderator view message
+.moderator-estimation-view {
+  width: 80%;
+  min-height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--p-primary-300);
+  border-radius: 8px;
+  margin-top: 50px;
+  padding: 20px;
+
+  p {
+    color: var(--p-primary-300);
+    font-size: 18px;
+    text-align: center;
+    font-style: italic;
+  }
+}
+
+// Add blur effect for moderator when question isn't visible to participants
+.moderator-content-blurred {
+  position: relative;
+  filter: blur(10px);
+  opacity: 0.7;
+  pointer-events: none;
+  user-select: none;
+}
+
+// Overlay with message for moderator
+.moderator-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(var(--p-primary-rgb), 0.1);
+  border-radius: 8px;
+  pointer-events: none;
+
+  p {
+    padding: 10px 15px;
+    background-color: var(--p-surface-card);
+    border: 2px solid var(--p-primary-color);
+    border-radius: 6px;
+    color: var(--p-primary-color);
+    font-weight: bold;
+    font-size: 16px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    text-align: center;
+  }
+}
+
+// Add styling for correct answer highlighting for moderator
+// :host ::ng-deep .moderator-option {
+//   &.correct-answer {
+//     .p-button {
+//       border-color: var(--p-green-500) !important;
+//       border-width: 2px !important;
+
+//       &.p-button-outlined {
+//         color: var(--p-green-500) !important;
+
+//         &::after {
+//           content: " ✓";
+//           color: var(--p-green-500);
+//           font-weight: bold;
+//         }
+//       }
+
+//       &:not(.p-button-outlined) {
+//         background-color: var(--p-green-500) !important;
+//         border-color: var(--p-green-500) !important;
+//       }
+//     }
+//   }
+// }

@@ -501,6 +501,78 @@ io.on("connection", (socket) => {
     }
   });
 
+  // Add new handler for answer submissions
+  socket.on("game:submitAnswer", (lobbyCode, questionIndex, answer, type) => {
+    console.log(
+      "Answer submitted in lobby:",
+      lobbyCode,
+      "for question:",
+      questionIndex,
+      "answer:",
+      answer,
+      "type:",
+      type
+    );
+
+    const foundUser = findUserBySocketId(socket.id);
+
+    if (foundUser) {
+      const lobby = lobbys.find((lobby) => lobby.lobbyCode === lobbyCode);
+      if (lobby) {
+        // Initialize submittedAnswers if it doesn't exist
+        if (!lobby.submittedAnswers) {
+          lobby.submittedAnswers = [];
+        }
+
+        // Create the answer entry
+        const answerEntry = {
+          username: foundUser.username,
+          questionIndex: questionIndex,
+          answer: answer,
+          type: type,
+          timestamp: Date.now(),
+        };
+
+        // Check if user already submitted answer for this question
+        const existingAnswerIndex = lobby.submittedAnswers.findIndex(
+          (a) =>
+            a.username === foundUser.username &&
+            a.questionIndex === questionIndex
+        );
+
+        if (existingAnswerIndex !== -1) {
+          // Update existing answer
+          lobby.submittedAnswers[existingAnswerIndex] = answerEntry;
+        } else {
+          // Add new answer
+          lobby.submittedAnswers.push(answerEntry);
+        }
+
+        // Log event
+        addEventToLobbyEventHistory(
+          lobbyCode,
+          "game:answer:submitted",
+          foundUser.username,
+          { questionIndex, answer, type }
+        );
+
+        // Create update payload with all answers (so we can debug the mismatch)
+        const updatePayload = {
+          lobbyCode: lobbyCode,
+          answers: lobby.submittedAnswers,
+          currentQuestionState: {
+            index: lobby.gameState.currentQuestionIndex,
+          },
+        };
+
+        console.log("Sending all answers:", JSON.stringify(updatePayload));
+
+        // Emit to everyone in the lobby
+        io.to(lobbyCode).emit("game:answers", updatePayload);
+      }
+    }
+  });
+
   function sendCurrentBuzzerState(lobbyCode) {
     const lobby = lobbys.find((lobby) => lobby.lobbyCode === lobbyCode);
     if (lobby?.currentBuzzerState) {
@@ -563,6 +635,8 @@ io.on("connection", (socket) => {
           isQuestionVisible: false,
           isAnswerVisible: false,
         },
+        // Add submitted answers tracking
+        submittedAnswers: [],
       };
 
       lobbys.push(lobby);

@@ -5,41 +5,30 @@ import {
   Output,
   EventEmitter,
   OnDestroy,
-  ElementRef,
   ViewChild,
-  AfterViewInit,
+  ElementRef,
+  HostListener,
 } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
 import { GameService, GameData, Question } from '../game.service';
-import { LobbyService } from '../lobbys/lobby.service';
-import { CommonModule } from '@angular/common';
-import { HttpClientModule } from '@angular/common/http';
+import { LobbyService, SubmittedAnswer } from '../lobbys/lobby.service';
 import { BuzzerComponent } from '../lobbys/buzzer/buzzer.component';
-import { Subscription } from 'rxjs';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { typChevronLeft, typChevronRight } from '@ng-icons/typicons';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
-import { InputTextModule } from 'primeng/inputtext';
-import { TextareaModule } from 'primeng/textarea';
+import { NgIcon, provideIcons } from '@ng-icons/core';
 import { phosphorCheckFatFill } from '@ng-icons/phosphor-icons/fill';
 import {
   phosphorCheckFat,
   phosphorEye,
   phosphorEyeSlash,
 } from '@ng-icons/phosphor-icons/regular';
+import { typChevronLeft, typChevronRight } from '@ng-icons/typicons';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-game',
   standalone: true,
-  imports: [
-    CommonModule,
-    HttpClientModule,
-    BuzzerComponent,
-    NgIconComponent,
-    ButtonModule,
-    InputTextModule,
-    TextareaModule, // Import PrimeNG ButtonModule instead of ToggleButtonModule
-  ],
+  imports: [CommonModule, FormsModule, BuzzerComponent, ButtonModule, NgIcon],
   providers: [
     GameService,
     provideIcons({
@@ -54,221 +43,165 @@ import {
   templateUrl: './game.component.html',
   styleUrls: ['./game.component.scss'],
 })
-export class GameComponent implements OnInit, OnDestroy, AfterViewInit {
+export class GameComponent implements OnInit, OnDestroy {
   @Input() lobbyCode: string = '';
   @Input() isModerator: boolean = false;
   @Output() questionChanged = new EventEmitter<number>();
 
-  private subscriptions: Subscription[] = [];
-  private previousQuestionIndex = 0;
-
   gameData: GameData | null = null;
   currentQuestionIndex: number = 0;
-
-  // Animation states
+  currentQuestion: Question | null = null;
   isAnimating = false;
-  isAnimatingOut = false;
   isAnimatingIn = false;
-  animationDirection: 'next' | 'prev' = 'next';
-
-  // Track if answer should be blurred
+  isAnimatingOut = false;
+  animationDirection = '';
   isAnswerBlurred = true;
 
-  // Track selected answer
+  // Answer submission tracking
   selectedAnswer: string | null = null;
-
-  // Add a state variable to track submission status
+  multipleChoiceSubmitted = false;
   estimationSubmitted = false;
 
-  // Add a state variable to track multiple choice submission status
-  multipleChoiceSubmitted = false;
-
-  // Add new properties to track visibility states
-  isQuestionVisibleToParticipants = false; // Default to false for everyone
-  isAnswerVisibleToParticipants = false; // Default to false for everyone
-
-  // Add these properties to track eye icon state
+  // Question and answer visibility control
   questionSentToParticipants = false;
   answerSentToParticipants = false;
+  isQuestionVisibleToParticipants = false;
+  isAnswerVisibleToParticipants = false;
 
-  @ViewChild('estimationInput') estimationInputRef?: ElementRef;
+  // Submitted answers from all users
+  submittedAnswers: SubmittedAnswer[] = [];
+  currentQuestionAnswers: SubmittedAnswer[] = [];
 
-  get currentQuestion(): Question | undefined {
-    return this.gameData?.questions[this.currentQuestionIndex];
-  }
+  private subscriptions: Subscription[] = [];
+
+  // Add ViewChild reference to access the textarea element
+  @ViewChild('estimationInput')
+  estimationInput!: ElementRef<HTMLTextAreaElement>;
 
   constructor(
-    private route: ActivatedRoute,
-    private router: Router,
     private gameService: GameService,
     private lobbyService: LobbyService
   ) {}
 
   ngOnInit(): void {
-    // If the user is a moderator, make questions visible by default
-    if (this.isModerator) {
-      this.isQuestionVisibleToParticipants = true;
-    }
+    // Load game data
+    this.gameData = this.gameService.getGameData();
+    this.setCurrentQuestion(0);
 
-    // If lobbyCode is not provided as input, try to get it from route params
-    if (!this.lobbyCode) {
-      this.route.params.subscribe((params) => {
-        this.lobbyCode = params['lobbyCode'];
-        this.loadGameData();
-        this.loadGameState(); // Load game state after loading game data
-      });
-    } else {
-      this.loadGameData();
-      this.loadGameState(); // Load game state after loading game data
-    }
+    // Check game state for initial question index
+    this.lobbyService.getGameState(this.lobbyCode).subscribe((gameState) => {
+      if (gameState) {
+        this.currentQuestionIndex = gameState.currentQuestionIndex;
+        this.isQuestionVisibleToParticipants = gameState.isQuestionVisible;
+        this.isAnswerVisibleToParticipants = gameState.isAnswerVisible;
+        this.questionSentToParticipants = gameState.isQuestionVisible;
+        this.answerSentToParticipants = gameState.isAnswerVisible;
+        this.setCurrentQuestion(gameState.currentQuestionIndex);
+      }
+    });
 
-    // Listen for question change events from service
+    // Subscribe to question visibility changes
     this.subscriptions.push(
-      this.lobbyService.onQuestionChanged().subscribe((questionIndex) => {
-        // Only non-moderators should respond to these events
+      this.lobbyService.onQuestionVisible().subscribe(() => {
+        this.isQuestionVisibleToParticipants = true;
+      }),
+      this.lobbyService.onQuestionHidden().subscribe(() => {
+        this.isQuestionVisibleToParticipants = false;
+      }),
+      this.lobbyService.onAnswerVisible().subscribe(() => {
+        this.isAnswerVisibleToParticipants = true;
+      }),
+      this.lobbyService.onAnswerHidden().subscribe(() => {
+        this.isAnswerVisibleToParticipants = false;
+      }),
+
+      // Update the question changed subscription to handle animations for participants
+      this.lobbyService.onQuestionChanged().subscribe((index) => {
+        // For participants, we need to animate the transition
         if (!this.isModerator) {
-          console.log('Updating to question:', questionIndex);
+          // Determine animation direction based on index change
+          const direction = index > this.currentQuestionIndex ? 'next' : 'prev';
 
-          // Determine animation direction based on the index change
-          this.animationDirection =
-            questionIndex > this.currentQuestionIndex ? 'next' : 'prev';
-
-          // Store current index before changing it
-          const oldIndex = this.currentQuestionIndex;
-
-          // Animate the question change
-          this.animateQuestionChange(() => {
-            this.currentQuestionIndex = questionIndex;
-
-            // Reset visibility states for new question
-            this.isQuestionVisibleToParticipants = false;
-            this.isAnswerVisibleToParticipants = false;
-
-            // Emit the change back up to the lobby component
-            this.questionChanged.emit(this.currentQuestionIndex);
-          });
+          // Trigger animation with the correct direction
+          this.animateQuestionTransition(direction, index);
+        } else {
+          // For moderator, just update without animation (they control the navigation)
+          // Reset submission state when question changes
+          this.selectedAnswer = null;
+          this.multipleChoiceSubmitted = false;
+          this.estimationSubmitted = false;
+          this.setCurrentQuestion(index);
         }
       })
     );
 
-    // Make sure to listen for game start event to initialize properly
+    // Subscribe to submitted answers
     this.subscriptions.push(
-      this.lobbyService.onGameStarted().subscribe(() => {
-        console.log('Game started event received');
-        // For participants, make sure questions start hidden
-        if (!this.isModerator) {
-          this.isQuestionVisibleToParticipants = false;
-          this.isAnswerVisibleToParticipants = false;
-        }
+      this.lobbyService.getAnswers().subscribe((answers) => {
+        console.log('Received answers in component:', answers);
+        this.submittedAnswers = answers;
+        this.updateCurrentQuestionAnswers();
       })
     );
-
-    // Add listeners for question and answer visibility events
-    if (!this.isModerator) {
-      this.subscriptions.push(
-        this.lobbyService.onQuestionVisible().subscribe(() => {
-          console.log('Making question visible to participant');
-          this.isQuestionVisibleToParticipants = true;
-        })
-      );
-
-      this.subscriptions.push(
-        this.lobbyService.onAnswerVisible().subscribe(() => {
-          console.log('Making answer visible to participant');
-          this.isAnswerVisibleToParticipants = true;
-          this.isAnswerBlurred = false; // Auto-unblur when moderator sends answer
-        })
-      );
-    }
-
-    // Add listeners for question and answer hidden events
-    if (!this.isModerator) {
-      this.subscriptions.push(
-        this.lobbyService.onQuestionHidden().subscribe(() => {
-          console.log('Hiding question from participant');
-          this.isQuestionVisibleToParticipants = false;
-        })
-      );
-
-      this.subscriptions.push(
-        this.lobbyService.onAnswerHidden().subscribe(() => {
-          console.log('Hiding answer from participant');
-          this.isAnswerVisibleToParticipants = false;
-          // No need to restore the blur when hidden
-        })
-      );
-    }
-  }
-
-  ngAfterViewInit() {
-    // Focus the estimation input if it exists
-    this.focusEstimationInput();
   }
 
   ngOnDestroy(): void {
-    // Clean up subscriptions when component is destroyed
+    // Clean up subscriptions
     this.subscriptions.forEach((sub) => sub.unsubscribe());
   }
 
-  loadGameData(): void {
-    // Get the game data from the service
-    this.gameData = this.gameService.getGameData();
-    console.log('Game data in game component:', this.gameData);
-
-    // If still no data, try loading it
-    if (!this.gameData) {
-      this.gameService.loadGameData().subscribe({
-        next: (gameFile) => {
-          this.gameData = gameFile.gameData;
-          // Emit initial question index
-          this.questionChanged.emit(this.currentQuestionIndex);
-        },
-        error: (err) => {
-          console.error('Error loading game data:', err);
-        },
-      });
-    } else {
-      // Emit initial question index
-      this.questionChanged.emit(this.currentQuestionIndex);
+  private setCurrentQuestion(index: number): void {
+    if (
+      this.gameData &&
+      this.gameData.questions &&
+      this.gameData.questions.length > index
+    ) {
+      this.currentQuestionIndex = index;
+      this.currentQuestion = this.gameData.questions[index];
+      this.questionChanged.emit(index);
+      this.updateCurrentQuestionAnswers();
     }
   }
 
-  // Add method to load game state
-  loadGameState(): void {
-    if (!this.lobbyCode) return;
+  private updateCurrentQuestionAnswers(): void {
+    // Filter answers to only include those for the current question index
+    this.currentQuestionAnswers = this.submittedAnswers.filter(
+      (answer) => answer.questionIndex === this.currentQuestionIndex
+    );
 
-    // Get current game state when component initializes
-    this.lobbyService.getGameState(this.lobbyCode).subscribe((gameState) => {
-      if (gameState) {
-        console.log('Received game state in component:', gameState);
+    console.log(
+      'Filtered answers for current question:',
+      this.currentQuestionAnswers
+    );
 
-        // Apply state from server
-        if (gameState.isGameActive) {
-          // Set the current question index
-          this.currentQuestionIndex = gameState.currentQuestionIndex;
+    // Check if current user already submitted an answer
+    if (!this.isModerator) {
+      const username = localStorage.getItem('username');
+      const userAnswer = this.currentQuestionAnswers.find(
+        (a) => a.username === username
+      );
 
-          // Update visibility flags
-          if (!this.isModerator) {
-            // Only for participants
-            this.isQuestionVisibleToParticipants = gameState.isQuestionVisible;
-            this.isAnswerVisibleToParticipants = gameState.isAnswerVisible;
-          }
-
-          // Update UI state based on visibility
-          if (gameState.isQuestionVisible) {
-            this.questionSentToParticipants = true;
-          }
-
-          if (gameState.isAnswerVisible) {
-            this.answerSentToParticipants = true;
-            this.isAnswerBlurred = false; // Unblur the answer if it's visible
-          }
-
-          // Emit the current question index
-          this.questionChanged.emit(this.currentQuestionIndex);
+      if (userAnswer) {
+        if (userAnswer.type === 'multipleChoice') {
+          this.selectedAnswer = userAnswer.answer;
+          this.multipleChoiceSubmitted = true;
+        } else if (userAnswer.type === 'estimation') {
+          this.estimationSubmitted = true;
         }
+      } else {
+        // Reset submission state if no answer found for current question
+        this.selectedAnswer = null;
+        this.multipleChoiceSubmitted = false;
+        this.estimationSubmitted = false;
       }
-    });
+    }
+  }
+
+  // Navigation methods
+  previousQuestion(): void {
+    if (this.currentQuestionIndex > 0 && !this.isAnimating) {
+      this.animateQuestionChange('prev');
+    }
   }
 
   nextQuestion(): void {
@@ -277,124 +210,140 @@ export class GameComponent implements OnInit, OnDestroy, AfterViewInit {
       this.currentQuestionIndex < this.gameData.questions.length - 1 &&
       !this.isAnimating
     ) {
-      this.animationDirection = 'next';
-      this.animateQuestionChange(() => {
-        this.currentQuestionIndex++;
-        this.questionChanged.emit(this.currentQuestionIndex);
-
-        // Only moderator should broadcast question changes
-        if (this.isModerator) {
-          this.lobbyService.changeQuestion(
-            this.lobbyCode,
-            this.currentQuestionIndex
-          );
-        }
-      });
+      this.animateQuestionChange('next');
     }
   }
 
-  previousQuestion(): void {
-    if (this.currentQuestionIndex > 0 && !this.isAnimating) {
-      this.animationDirection = 'prev';
-      this.animateQuestionChange(() => {
-        this.currentQuestionIndex--;
-        this.questionChanged.emit(this.currentQuestionIndex);
-
-        // Only moderator should broadcast question changes
-        if (this.isModerator) {
-          this.lobbyService.changeQuestion(
-            this.lobbyCode,
-            this.currentQuestionIndex
-          );
-        }
-      });
-    }
-  }
-
-  // Helper method to animate question transitions
-  private animateQuestionChange(callback: () => void): void {
+  private animateQuestionChange(direction: 'next' | 'prev'): void {
     this.isAnimating = true;
     this.isAnimatingOut = true;
-    this.isAnswerBlurred = true; // Reset blur state for new question
+    this.animationDirection = direction;
 
-    // If user is moderator, we keep the question visible by default
-    if (!this.isModerator) {
-      this.isQuestionVisibleToParticipants = false;
-    }
-
-    // Reset answer visibility for all users
-    this.isAnswerVisibleToParticipants = false;
-
-    // Reset the sent flags when changing questions
-    this.questionSentToParticipants = false;
-    this.answerSentToParticipants = false;
-
-    this.selectedAnswer = null; // Reset selected answer for new question
-    this.estimationSubmitted = false; // Reset estimation submission state
-    this.multipleChoiceSubmitted = false; // Reset multiple choice submission state
-
-    // After first animation finishes, update the question and show the next one
     setTimeout(() => {
-      // Execute the callback to update the question
-      callback();
-
-      // Clear the first animation class and start second animation
       this.isAnimatingOut = false;
       this.isAnimatingIn = true;
 
-      // Remove the second animation class after it completes
+      if (direction === 'next') {
+        this.setCurrentQuestion(this.currentQuestionIndex + 1);
+      } else {
+        this.setCurrentQuestion(this.currentQuestionIndex - 1);
+      }
+
+      // Reset visibility state for new question
+      this.questionSentToParticipants = false;
+      this.answerSentToParticipants = false;
+
+      // Reset selection state when changing questions
+      this.selectedAnswer = null;
+      this.multipleChoiceSubmitted = false;
+      this.estimationSubmitted = false;
+
+      // Always reset the answer blur when changing questions
+      this.isAnswerBlurred = true;
+
+      // Notify server about question change (for moderator only)
+      if (this.isModerator) {
+        this.lobbyService.changeQuestion(
+          this.lobbyCode,
+          this.currentQuestionIndex
+        );
+      }
+
+      // Make sure to update the displayed answers for the new question
+      this.updateCurrentQuestionAnswers();
+
       setTimeout(() => {
         this.isAnimatingIn = false;
         this.isAnimating = false;
-        this.focusEstimationInput(); // Focus the input after animation
-      }, 400); // This timing should match the CSS animation duration
-    }, 400); // This timing should match the CSS animation duration
+      }, 300);
+    }, 300);
   }
 
-  // Toggle blur state on answer click
+  // Add a new method to handle animated transitions for participants
+  private animateQuestionTransition(
+    direction: 'next' | 'prev',
+    newIndex: number
+  ): void {
+    this.isAnimating = true;
+    this.isAnimatingOut = true;
+    this.animationDirection = direction;
+
+    // Reset states for the transition
+    this.selectedAnswer = null;
+    this.multipleChoiceSubmitted = false;
+    this.estimationSubmitted = false;
+
+    // First part of animation - fade out current question
+    setTimeout(() => {
+      this.isAnimatingOut = false;
+      this.isAnimatingIn = true;
+
+      // Update to the new question
+      this.setCurrentQuestion(newIndex);
+
+      // Reset visibility based on server state
+      // Note: We don't change visibility here as it's controlled by the moderator
+
+      // Second part of animation - fade in new question
+      setTimeout(() => {
+        this.isAnimatingIn = false;
+        this.isAnimating = false;
+      }, 300);
+    }, 300);
+  }
+
+  // Toggle answer blur effect
   toggleAnswerBlur(): void {
     this.isAnswerBlurred = !this.isAnswerBlurred;
   }
 
-  backToLobby(): void {
-    this.router.navigate(['/lobby', this.lobbyCode]);
+  // Question & answer visibility control for moderator
+  setQuestionVisibility(visible: boolean): void {
+    this.questionSentToParticipants = visible;
+    this.lobbyService.toggleQuestionVisibility(this.lobbyCode, visible);
   }
 
-  // Update select answer method to just track selection without submitting
+  setAnswerVisibility(visible: boolean): void {
+    this.answerSentToParticipants = visible;
+    this.lobbyService.toggleAnswerVisibility(this.lobbyCode, visible);
+  }
+
+  // Multiple choice selection and submission
   selectAnswer(option: string): void {
-    // Only allow selection if not already submitted
     if (!this.multipleChoiceSubmitted) {
-      console.log('Selected answer:', option);
       this.selectedAnswer = option;
     }
   }
 
-  // New method to confirm multiple choice selection
   confirmMultipleChoice(): void {
-    if (this.selectedAnswer) {
-      console.log('Confirmed multiple choice answer:', this.selectedAnswer);
+    if (this.selectedAnswer && !this.multipleChoiceSubmitted) {
+      console.log('Submitting multiple choice answer:', this.selectedAnswer);
+      this.lobbyService.submitAnswer(
+        this.lobbyCode,
+        this.currentQuestionIndex,
+        this.selectedAnswer,
+        'multipleChoice'
+      );
       this.multipleChoiceSubmitted = true;
-      // Here you would handle the answer submission logic
-      // For example, checking if it's correct and maybe moving to the next question
-    } else {
-      console.error('No option selected');
     }
   }
 
+  // Estimation submission
   submitEstimation(value: string): void {
-    if (value) {
-      console.log('Submitted estimation:', value);
-      // Set to true (don't toggle) so button stays in filled state
+    // Only proceed if NOT a moderator and value is provided
+    if (!this.isModerator && value && !this.estimationSubmitted) {
+      console.log('Submitting estimation:', value);
+      this.lobbyService.submitAnswer(
+        this.lobbyCode,
+        this.currentQuestionIndex,
+        value,
+        'estimation'
+      );
       this.estimationSubmitted = true;
-      // Here you would handle the estimation submission logic
-      // For example, checking how close it is to the correct answer
-    } else {
-      console.error('Invalid estimation value');
-      // Handle invalid input
     }
   }
 
-  // Method to adjust font size based on content
+  // Adjust font size for estimation input
   adjustFontSize(input: HTMLTextAreaElement) {
     if (!input) return;
 
@@ -408,9 +357,9 @@ export class GameComponent implements OnInit, OnDestroy, AfterViewInit {
       fontSize = 15; // Default large size
       // Simple algorithm: reduce font size as content grows
       // Adjust these numbers based on your specific input field size
-      if (contentLength > 5) fontSize = 13;
-      if (contentLength > 9) fontSize = 10;
-      if (contentLength > 12) fontSize = 8;
+      if (contentLength > 5) fontSize = 12;
+      if (contentLength > 9) fontSize = 9;
+      if (contentLength > 12) fontSize = 7;
       if (contentLength > 16) fontSize = 4.5;
       if (contentLength > 20) {
         input.style.lineHeight = '7vh';
@@ -424,65 +373,27 @@ export class GameComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
-  // Focus the estimation input when the component loads or question changes
-  focusEstimationInput() {
-    setTimeout(() => {
-      if (
-        this.estimationInputRef &&
-        this.currentQuestion?.type === 'estimation'
-      ) {
-        this.estimationInputRef.nativeElement.focus();
-      }
-    }, 500);
+  // Get users who selected a specific option for multiple choice questions
+  getUsersForOption(option: string): { username: string }[] {
+    if (
+      !this.currentQuestionAnswers ||
+      this.currentQuestionAnswers.length === 0
+    ) {
+      return [];
+    }
+
+    return this.currentQuestionAnswers
+      .filter(
+        (answer) => answer.type === 'multipleChoice' && answer.answer === option
+      )
+      .map((answer) => ({
+        username: answer.username,
+      }));
   }
 
-  // Add methods for moderator to send questions and answers
-  sendQuestion(): void {
-    if (this.isModerator && this.lobbyCode) {
-      console.log('Moderator is sending question to participants');
-      this.lobbyService.sendQuestion(this.lobbyCode);
-      this.questionSentToParticipants = true; // Set flag when sent
-    }
-  }
-
-  sendAnswer(): void {
-    if (this.isModerator && this.lobbyCode) {
-      console.log('Moderator is sending answer to participants');
-      this.lobbyService.sendAnswer(this.lobbyCode);
-      // Auto-unblur when sending to participants
-      this.isAnswerBlurred = false;
-      this.answerSentToParticipants = true; // Set flag when sent
-    }
-  }
-
-  // Replace toggleQuestionVisibility with an explicit setter
-  setQuestionVisibility(visible: boolean): void {
-    if (this.isModerator && this.lobbyCode) {
-      // Only update if state is actually changing
-      if (this.questionSentToParticipants !== visible) {
-        this.questionSentToParticipants = visible;
-
-        console.log('Moderator is setting question visibility:', visible);
-        this.lobbyService.toggleQuestionVisibility(this.lobbyCode, visible);
-      }
-    }
-  }
-
-  // Replace toggleAnswerVisibility with an explicit setter
-  setAnswerVisibility(visible: boolean): void {
-    if (this.isModerator && this.lobbyCode) {
-      // Only update if state is actually changing
-      if (this.answerSentToParticipants !== visible) {
-        this.answerSentToParticipants = visible;
-
-        console.log('Moderator is setting answer visibility:', visible);
-        this.lobbyService.toggleAnswerVisibility(this.lobbyCode, visible);
-
-        // Only auto-unblur when showing, not when hiding
-        if (visible) {
-          this.isAnswerBlurred = false;
-        }
-      }
-    }
+  // Listen for window resize to adjust layout
+  @HostListener('window:resize')
+  onResize(): void {
+    // Implement any responsive adjustments if needed
   }
 }
