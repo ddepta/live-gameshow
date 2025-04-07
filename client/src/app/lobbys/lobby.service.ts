@@ -63,6 +63,10 @@ export class LobbyService {
   // Override the answersSubject with a new instance to ensure changes are detected
   private answersSubject = new BehaviorSubject<SubmittedAnswer[]>([]);
 
+  // Add point update subjects
+  private pointUpdatedSubject = new Subject<User>();
+  private allPointsResetSubject = new Subject<User[]>();
+
   private currentLobby: Lobby | null = null;
   private socket!: Socket;
 
@@ -208,6 +212,63 @@ export class LobbyService {
           'Current value of answersSubject:',
           this.answersSubject.value
         );
+      }
+    });
+
+    // Listen for point updates
+    this.socket.on('points:updated', (updatedUser: User) => {
+      console.log('Point updated for user:', updatedUser);
+      this.pointUpdatedSubject.next(updatedUser);
+
+      // Also update the current lobby if applicable
+      if (this.currentLobby) {
+        // Update regular user
+        if (this.currentLobby.users) {
+          const userIndex = this.currentLobby.users.findIndex(
+            (u) => u.socketId === updatedUser.socketId
+          );
+
+          if (userIndex >= 0) {
+            this.currentLobby.users[userIndex].points = updatedUser.points;
+          }
+        }
+
+        // Check if moderator points were updated
+        if (
+          this.currentLobby.moderator &&
+          this.currentLobby.moderator.socketId === updatedUser.socketId
+        ) {
+          this.currentLobby.moderator.points = updatedUser.points;
+        }
+
+        // Notify subscribers that user list has been updated
+        this.userListSubject.next(this.currentLobby.lobbyCode);
+      }
+    });
+
+    // Listen for points reset
+    this.socket.on('points:allReset', () => {
+      console.log('All points have been reset');
+
+      // Update local state if we have a lobby
+      if (this.currentLobby) {
+        // Reset points for all users
+        if (this.currentLobby.users) {
+          this.currentLobby.users.forEach((user) => {
+            user.points = 0;
+          });
+        }
+
+        // Reset moderator points too
+        if (this.currentLobby.moderator) {
+          this.currentLobby.moderator.points = 0;
+        }
+
+        // Notify about the reset
+        this.allPointsResetSubject.next(this.currentLobby.users || []);
+
+        // Also notify that user list has changed
+        this.userListSubject.next(this.currentLobby.lobbyCode);
       }
     });
   }
@@ -402,5 +463,49 @@ export class LobbyService {
     }, 0);
 
     return this.answersSubject.asObservable();
+  }
+
+  // Point management methods
+  addPoint(lobbyCode: string, socketId: string): void {
+    console.log(`Adding point to user ${socketId} in lobby ${lobbyCode}`);
+    this.socket.emit('points:add', lobbyCode, socketId, 1);
+  }
+
+  removePoint(lobbyCode: string, socketId: string): void {
+    console.log(`Removing point from user ${socketId} in lobby ${lobbyCode}`);
+    // Call points:add with negative value to remove a point
+    this.socket.emit('points:add', lobbyCode, socketId, -1);
+  }
+
+  setPoints(lobbyCode: string, socketId: string, points: number): void {
+    console.log(`Setting points for user ${socketId} to ${points}`);
+    this.socket.emit('points:set', lobbyCode, socketId, points);
+  }
+
+  resetAllPoints(lobbyCode: string): void {
+    console.log(`Resetting all points in lobby ${lobbyCode}`);
+    this.socket.emit('points:reset', lobbyCode);
+  }
+
+  // Get current points for all users in a lobby
+  getPoints(lobbyCode: string): Promise<{ users: User[]; moderator: User }> {
+    return new Promise((resolve, reject) => {
+      this.socket.emit('points:get', lobbyCode, (response: any) => {
+        if (response.error) {
+          reject(response.error);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  // Observables for point updates
+  onPointUpdated(): Observable<User> {
+    return this.pointUpdatedSubject.asObservable();
+  }
+
+  onAllPointsReset(): Observable<User[]> {
+    return this.allPointsResetSubject.asObservable();
   }
 }

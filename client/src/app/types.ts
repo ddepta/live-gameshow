@@ -15,6 +15,7 @@ export interface BuzzerState {
 export interface User {
   socketId: string;
   username: string;
+  points?: number; // Add points property
 }
 
 // moderator, users, if active, points, buzzer history

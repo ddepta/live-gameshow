@@ -1,44 +1,77 @@
-<div class="user-panel-container">
-  <h3 class="panel-title">TEILNEHMER</h3>
-  <div class="users-list">
-    <!-- Show moderator first -->
-    <div class="user-item moderator" *ngIf="displayedModerator">
-      <ng-icon
-        name="gameHammerDrop"
-        size="20px"
-        class="moderator-icon"
-      ></ng-icon>
-      <span class="user-name"
-        >{{ displayedModerator.username }} (Moderator)</span
-      >
-    </div>
-    <div
-      class="divider"
-      *ngIf="displayedModerator && displayedUsers.length > 0"
-    ></div>
+<div class="panel-wrapper">
+  <div class="user-panel-container">
+    <h3 class="panel-title">TEILNEHMER</h3>
 
-    <!-- Show all other users -->
-    <ng-container *ngFor="let user of displayedUsers; let last = last">
-      <div class="user-item">
-        <span class="user-name">{{ user.username }}</span>
+    <div class="users-list">
+      <!-- Moderator -->
+      <div class="user-item moderator" *ngIf="displayedModerator">
         <ng-icon
-          *ngIf="isModerator"
-          name="phosphorXCircleFill"
-          size="18px"
-          class="kick-icon"
-          (click)="kickUser(user)"
+          name="gameHammerDrop"
+          size="20px"
+          class="moderator-icon"
+        ></ng-icon>
+        <span class="user-name"
+          >{{ displayedModerator.username }} (Moderator)</span
         >
-        </ng-icon>
+        <span
+          class="points-badge"
+          *ngIf="displayedModerator.points !== undefined"
+        >
+          {{ displayedModerator.points }}
+        </span>
       </div>
-      <div class="divider" *ngIf="!last"></div>
-    </ng-container>
+      <div
+        class="divider"
+        *ngIf="displayedModerator && displayedUsers.length > 0"
+      ></div>
 
-    <!-- Message when no users are present -->
-    <div
-      class="no-users"
-      *ngIf="!displayedModerator && displayedUsers.length === 0"
-    >
-      LEER
+      <!-- Other users -->
+      <ng-container *ngFor="let user of displayedUsers; let last = last">
+        <div class="user-item" id="user-{{ user.socketId }}">
+          <!-- Kick Icon -->
+          <ng-icon
+            *ngIf="isModerator"
+            name="phosphorXCircleFill"
+            size="18px"
+            class="kick-icon"
+            (click)="kickUser(user)"
+          >
+          </ng-icon>
+
+          <!-- User Info -->
+          <span class="user-name">{{ user.username }}</span>
+
+          <!-- Points control - moved to be just before points badge -->
+          <div class="points-control" *ngIf="isModerator">
+            <span
+              class="point-btn decrease"
+              (click)="removePoint(user)"
+              title="Punkt abziehen"
+              >-</span
+            >
+            <span
+              class="point-btn increase"
+              (click)="addPoint(user)"
+              title="Punkt hinzufügen"
+              >+</span
+            >
+          </div>
+
+          <span class="points-badge" *ngIf="user.points !== undefined">
+            {{ user.points }}
+          </span>
+        </div>
+
+        <div class="divider" *ngIf="!last"></div>
+      </ng-container>
+
+      <!-- No users message -->
+      <div
+        class="no-users"
+        *ngIf="!displayedModerator && displayedUsers.length === 0"
+      >
+        LEER
+      </div>
     </div>
   </div>
 </div>

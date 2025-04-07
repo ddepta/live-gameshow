@@ -573,6 +573,240 @@ io.on("connection", (socket) => {
     }
   });
 
+  // Add new socket events for points management
+  socket.on("points:add", (lobbyCode, userSocketId, points) => {
+    console.log(
+      `Adding ${points} points to user ${userSocketId} in lobby ${lobbyCode}`
+    );
+    const foundUser = findUserBySocketId(socket.id);
+
+    if (!foundUser) {
+      console.log("User not found for socket ID:", socket.id);
+      return;
+    }
+
+    const lobby = lobbys.find((lobby) => lobby.lobbyCode === lobbyCode);
+    if (!lobby) {
+      console.log("Lobby not found:", lobbyCode);
+      return;
+    }
+
+    // Only moderators can add points
+    if (lobby.moderator.username !== foundUser.username) {
+      console.log("User is not moderator:", foundUser.username);
+      return;
+    }
+
+    // Find the target user to give points to
+    const targetUser = lobby.users.find(
+      (user) => user.socketId === userSocketId
+    );
+    if (!targetUser) {
+      // Check if it's the moderator who gets points
+      if (lobby.moderator.socketId === userSocketId) {
+        // Initialize points property if it doesn't exist
+        if (!lobby.moderator.points) lobby.moderator.points = 0;
+        lobby.moderator.points += points;
+
+        // Broadcast the updated points
+        io.to(lobbyCode).emit("points:updated", {
+          socketId: userSocketId,
+          username: lobby.moderator.username,
+          points: lobby.moderator.points,
+        });
+
+        // Log the event
+        addEventToLobbyEventHistory(
+          lobbyCode,
+          "points:added",
+          foundUser.username,
+          { targetUser: lobby.moderator.username, points: points }
+        );
+        return;
+      }
+      console.log("Target user not found:", userSocketId);
+      return;
+    }
+
+    // Initialize points property if it doesn't exist
+    if (!targetUser.points) targetUser.points = 0;
+    targetUser.points += points;
+
+    // Broadcast the updated points
+    io.to(lobbyCode).emit("points:updated", {
+      socketId: userSocketId,
+      username: targetUser.username,
+      points: targetUser.points,
+    });
+
+    // Log the event
+    addEventToLobbyEventHistory(lobbyCode, "points:added", foundUser.username, {
+      targetUser: targetUser.username,
+      points: points,
+    });
+  });
+
+  socket.on("points:set", (lobbyCode, userSocketId, points) => {
+    console.log(
+      `Setting points for user ${userSocketId} in lobby ${lobbyCode} to ${points}`
+    );
+    const foundUser = findUserBySocketId(socket.id);
+
+    if (!foundUser) {
+      console.log("User not found for socket ID:", socket.id);
+      return;
+    }
+
+    const lobby = lobbys.find((lobby) => lobby.lobbyCode === lobbyCode);
+    if (!lobby) {
+      console.log("Lobby not found:", lobbyCode);
+      return;
+    }
+
+    // Only moderators can set points
+    if (lobby.moderator.username !== foundUser.username) {
+      console.log("User is not moderator:", foundUser.username);
+      return;
+    }
+
+    // Find the target user to set points for
+    const targetUser = lobby.users.find(
+      (user) => user.socketId === userSocketId
+    );
+    if (!targetUser) {
+      // Check if it's the moderator whose points are being set
+      if (lobby.moderator.socketId === userSocketId) {
+        lobby.moderator.points = points;
+
+        // Broadcast the updated points
+        io.to(lobbyCode).emit("points:updated", {
+          socketId: userSocketId,
+          username: lobby.moderator.username,
+          points: lobby.moderator.points,
+        });
+
+        // Log the event
+        addEventToLobbyEventHistory(
+          lobbyCode,
+          "points:set",
+          foundUser.username,
+          { targetUser: lobby.moderator.username, points: points }
+        );
+        return;
+      }
+      console.log("Target user not found:", userSocketId);
+      return;
+    }
+
+    // Set the points for the user
+    targetUser.points = points;
+
+    // Broadcast the updated points
+    io.to(lobbyCode).emit("points:updated", {
+      socketId: userSocketId,
+      username: targetUser.username,
+      points: targetUser.points,
+    });
+
+    // Log the event
+    addEventToLobbyEventHistory(lobbyCode, "points:set", foundUser.username, {
+      targetUser: targetUser.username,
+      points: points,
+    });
+  });
+
+  socket.on("points:reset", (lobbyCode) => {
+    console.log(`Resetting all points in lobby ${lobbyCode}`);
+    const foundUser = findUserBySocketId(socket.id);
+
+    if (!foundUser) {
+      console.log("User not found for socket ID:", socket.id);
+      return;
+    }
+
+    const lobby = lobbys.find((lobby) => lobby.lobbyCode === lobbyCode);
+    if (!lobby) {
+      console.log("Lobby not found:", lobbyCode);
+      return;
+    }
+
+    // Only moderators can reset points
+    if (lobby.moderator.username !== foundUser.username) {
+      console.log("User is not moderator:", foundUser.username);
+      return;
+    }
+
+    // Reset points for all users in the lobby
+    lobby.users.forEach((user) => {
+      user.points = 0;
+    });
+
+    // Reset points for moderator too
+    if (lobby.moderator) {
+      lobby.moderator.points = 0;
+    }
+
+    // Broadcast that all points were reset
+    io.to(lobbyCode).emit("points:allReset");
+
+    // Log the event
+    addEventToLobbyEventHistory(
+      lobbyCode,
+      "points:reset",
+      foundUser.username,
+      {}
+    );
+  });
+
+  // Add new handler for getting points
+  socket.on("points:get", (lobbyCode, callback) => {
+    console.log(`Getting points for lobby ${lobbyCode}`);
+
+    const lobby = lobbys.find((lobby) => lobby.lobbyCode === lobbyCode);
+    if (!lobby) {
+      console.log("Lobby not found:", lobbyCode);
+      callback({ error: "Lobby not found" });
+      return;
+    }
+
+    // Collect points for all users in the lobby
+    const pointsData = {
+      users: lobby.users.map((user) => ({
+        socketId: user.socketId,
+        username: user.username,
+        points: user.points || 0,
+      })),
+      moderator: {
+        socketId: lobby.moderator.socketId,
+        username: lobby.moderator.username,
+        points: lobby.moderator.points || 0,
+      },
+    };
+
+    callback(pointsData);
+  });
+
+  // Add points when user submits a correct answer
+  socket.on("game:answerCorrect", (lobbyCode, userSocketId, pointsToAdd) => {
+    const foundUser = findUserBySocketId(socket.id);
+
+    if (!foundUser) {
+      console.log("User not found for socket ID:", socket.id);
+      return;
+    }
+
+    const lobby = lobbys.find((lobby) => lobby.lobbyCode === lobbyCode);
+    if (!lobby || lobby.moderator.username !== foundUser.username) {
+      return; // Only moderators can mark answers as correct
+    }
+
+    // Default points to add if not specified
+    const points = pointsToAdd || 1;
+
+    // Re-use the points:add logic
+    socket.emit("points:add", lobbyCode, userSocketId, points);
+  });
+
   function sendCurrentBuzzerState(lobbyCode) {
     const lobby = lobbys.find((lobby) => lobby.lobbyCode === lobbyCode);
     if (lobby?.currentBuzzerState) {
@@ -620,7 +854,7 @@ io.on("connection", (socket) => {
 
       currentBuzzerState = { action: "", socketId: "", username: "", data: "" };
 
-      var moderator = { socketId: socket.id, username: username };
+      var moderator = { socketId: socket.id, username: username, points: 0 }; // Initialize moderator points
       var lobby = {
         lobbyCode: lobbyCode,
         moderator: moderator,
@@ -679,6 +913,7 @@ io.on("connection", (socket) => {
       lobbys[lobbyIndex].users.push({
         socketId: socket.id,
         username: username,
+        points: 0, // Initialize points to zero
       });
 
       addEventToLobbyEventHistory(lobbyCode, "lobby:user:joined", username, "");
@@ -971,10 +1206,12 @@ io.on("connection", (socket) => {
         users: lobby.users.map((user) => ({
           socketId: user.socketId,
           username: user.username,
+          points: user.points || 0, // Include points
         })),
         moderator: {
           socketId: lobby.moderator.socketId,
           username: lobby.moderator.username,
+          points: lobby.moderator.points || 0, // Include moderator points
         },
       };
 
