@@ -4,17 +4,18 @@
     [class.large]="size === 'large'"
     [class.buzzered]="activeBuzzer"
     [class.locked]="buzzerLocked"
-    [disabled]="activeBuzzer || buzzerLocked"
+    [class.moderator-disabled]="isModerator && !activeBuzzer"
+    [disabled]="activeBuzzer || buzzerLocked || isModerator"
     (click)="buzzer()"
   >
-    <div class="buzzer-inner">
+    <div class="buzzer-inner static-ring">
       <div class="pulse-ring"></div>
       <div class="profile-placeholder">
         <span *ngIf="!activeBuzzer && !buzzerLocked">BUZZ!</span>
         <ng-icon
           *ngIf="buzzerLocked"
           name="phosphorLockLaminatedFill"
-          size="3rem"
+          size="1.3em"
         ></ng-icon>
         <div class="buzzer-status" *ngIf="activeBuzzer" @fadeIn>
           <div class="buzzer-name">{{ buzzerName }}</div>
