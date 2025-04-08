@@ -6,7 +6,8 @@ import { Socket, io } from 'socket.io-client';
 })
 export class SocketService {
   private static socket: Socket;
-  private serverUrl = 'http://localhost:3000';
+  // private serverUrl = 'http://localhost:3000';
+  private serverUrl = 'https://live-gameshow.onrender.com'; // Replace with your server URL
 
   constructor() {
     if (!SocketService.socket) {
