@@ -10,6 +10,21 @@ export interface BuzzerState {
   socketId: string;
   username: string;
   data: string;
+  evaluation?: BuzzerEvaluation; // Add evaluation property
+}
+
+// New interface for buzzer answer evaluation
+export interface BuzzerEvaluation {
+  isCorrect: boolean | null;
+  evaluatedAt: number | null;
+  finalized: boolean;
+}
+
+// New interface for the buzzer round finalization event
+export interface BuzzerRoundFinalized {
+  username: string;
+  isCorrect: boolean;
+  pointsAwarded: number;
 }
 
 export interface User {

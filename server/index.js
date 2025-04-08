@@ -202,6 +202,151 @@ io.on("connection", (socket) => {
     }
   });
 
+  // Add new events for buzzer answer evaluation
+  socket.on("buzzer:evaluate", (lobbyCode, isCorrect) => {
+    console.log(
+      `buzzer:evaluate - Answer marked as ${
+        isCorrect ? "correct" : "incorrect"
+      }`
+    );
+    const foundUser = findUserBySocketId(socket.id);
+
+    if (foundUser) {
+      const lobby = lobbys.find((lobby) => lobby.lobbyCode === lobbyCode);
+      if (lobby && lobby.moderator.username === foundUser.username) {
+        // Set the evaluation in the buzzer state
+        if (
+          lobby.currentBuzzerState &&
+          lobby.currentBuzzerState.action === "buzzer:pressed"
+        ) {
+          // Update the buzzer state to include the evaluation
+          lobby.currentBuzzerState.evaluation = {
+            isCorrect: isCorrect,
+            evaluatedAt: Date.now(),
+            finalized: false,
+          };
+
+          // Emit the evaluation to all clients in the lobby
+          io.to(lobbyCode).emit("buzzer:evaluated", {
+            username: lobby.currentBuzzerState.username,
+            isCorrect: isCorrect,
+          });
+
+          // Add to event history
+          addEventToLobbyEventHistory(
+            lobbyCode,
+            "buzzer:evaluated",
+            foundUser.username,
+            {
+              targetUser: lobby.currentBuzzerState.username,
+              isCorrect: isCorrect,
+            }
+          );
+        }
+      }
+    }
+  });
+
+  socket.on("buzzer:finalizeRound", (lobbyCode, addPoints) => {
+    console.log(
+      `buzzer:finalizeRound - Finalizing round, addPoints: ${addPoints}`
+    );
+    const foundUser = findUserBySocketId(socket.id);
+
+    if (foundUser) {
+      const lobby = lobbys.find((lobby) => lobby.lobbyCode === lobbyCode);
+      if (lobby && lobby.moderator.username === foundUser.username) {
+        if (lobby.currentBuzzerState && lobby.currentBuzzerState.evaluation) {
+          // Mark the round as finalized
+          lobby.currentBuzzerState.evaluation.finalized = true;
+
+          // If adding points and the answer was correct
+          if (addPoints && lobby.currentBuzzerState.evaluation.isCorrect) {
+            // Find the user who answered
+            const userSocketId = lobby.currentBuzzerState.socketId;
+
+            // Points to award for a correct buzzer answer
+            const pointsToAward = 1;
+
+            // Find the user in the lobby
+            let userFound = false;
+
+            // Check if it's the moderator
+            if (lobby.moderator.socketId === userSocketId) {
+              if (!lobby.moderator.points) lobby.moderator.points = 0;
+              lobby.moderator.points += pointsToAward;
+              userFound = true;
+
+              // Emit points updated event
+              io.to(lobbyCode).emit("points:updated", {
+                socketId: userSocketId,
+                username: lobby.moderator.username,
+                points: lobby.moderator.points,
+              });
+            }
+            // Check regular users
+            else {
+              for (const user of lobby.users) {
+                if (user.socketId === userSocketId) {
+                  if (!user.points) user.points = 0;
+                  user.points += pointsToAward;
+                  userFound = true;
+
+                  // Emit points updated event
+                  io.to(lobbyCode).emit("points:updated", {
+                    socketId: userSocketId,
+                    username: user.username,
+                    points: user.points,
+                  });
+                  break;
+                }
+              }
+            }
+
+            if (userFound) {
+              // Log the points addition
+              addEventToLobbyEventHistory(
+                lobbyCode,
+                "points:added",
+                foundUser.username,
+                {
+                  targetUser: lobby.currentBuzzerState.username,
+                  points: pointsToAward,
+                  reason: "correct buzzer answer",
+                }
+              );
+            }
+          }
+
+          // Emit round finalized event
+          io.to(lobbyCode).emit("buzzer:roundFinalized", {
+            username: lobby.currentBuzzerState.username,
+            isCorrect: lobby.currentBuzzerState.evaluation.isCorrect,
+            pointsAwarded:
+              addPoints && lobby.currentBuzzerState.evaluation.isCorrect
+                ? 1
+                : 0,
+          });
+
+          // Add to event history
+          addEventToLobbyEventHistory(
+            lobbyCode,
+            "buzzer:roundFinalized",
+            foundUser.username,
+            {
+              targetUser: lobby.currentBuzzerState.username,
+              isCorrect: lobby.currentBuzzerState.evaluation.isCorrect,
+              pointsAwarded:
+                addPoints && lobby.currentBuzzerState.evaluation.isCorrect
+                  ? 1
+                  : 0,
+            }
+          );
+        }
+      }
+    }
+  });
+
   socket.on("lobby:kick", (lobbyCode, userSocketId) => {
     console.log("lobby:kick", lobbyCode, userSocketId);
 
@@ -1029,7 +1174,17 @@ io.on("connection", (socket) => {
         socketId: socket.id,
         username: foundUser.username,
         data: "",
+        // Initialize the buzzer state with evaluation fields when a buzzer is pressed
+        evaluation:
+          action === "buzzer:pressed"
+            ? {
+                isCorrect: null,
+                evaluatedAt: null,
+                finalized: false,
+              }
+            : null,
       };
+
       lobbys[index].currentBuzzerState = currentBuzzerState;
       addEventToLobbyEventHistory(lobbyCode, action, foundUser.username, "");
 

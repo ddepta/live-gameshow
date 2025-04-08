@@ -33,6 +33,25 @@ export interface AnswerUpdate {
   answers: SubmittedAnswer[];
 }
 
+// New interfaces for buzzer judgment system
+export interface BuzzerJudgment {
+  lobbyCode: string;
+  buzzerUserId: string;
+  username: string;
+  isCorrect: boolean;
+  questionIndex: number;
+}
+
+export interface BuzzerRoundResult {
+  lobbyCode: string;
+  questionIndex: number;
+  winner: {
+    socketId: string;
+    username: string;
+  } | null;
+  pointsAwarded: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -66,6 +85,14 @@ export class LobbyService {
   // Add point update subjects
   private pointUpdatedSubject = new Subject<User>();
   private allPointsResetSubject = new Subject<User[]>();
+
+  // Add buzzer judgment subjects
+  private buzzerJudgmentSubject = new Subject<BuzzerJudgment>();
+  private buzzerRoundCompletedSubject = new Subject<BuzzerRoundResult>();
+  private activeBuzzerUserSubject = new BehaviorSubject<{
+    socketId: string;
+    username: string;
+  } | null>(null);
 
   private currentLobby: Lobby | null = null;
   private socket!: Socket;
@@ -270,6 +297,39 @@ export class LobbyService {
         // Also notify that user list has changed
         this.userListSubject.next(this.currentLobby.lobbyCode);
       }
+    });
+
+    // Update buzzer event listeners to match index.js implementation
+    this.socket.on(
+      'buzzer:pressed',
+      (data: { socketId: string; username: string }) => {
+        console.log('Buzzer pressed by:', data.username);
+        this.activeBuzzerUserSubject.next(data);
+      }
+    );
+
+    this.socket.on('buzzer:reset', () => {
+      console.log('Buzzers reset by server');
+      this.activeBuzzerUserSubject.next(null);
+    });
+
+    // Listen for round completion results
+    this.socket.on('buzzer:roundResult', (result: BuzzerRoundResult) => {
+      console.log('Buzzer round result received:', result);
+      this.buzzerRoundCompletedSubject.next(result);
+      this.activeBuzzerUserSubject.next(null);
+    });
+
+    // Update buzzer result event listener
+    this.socket.on('buzzer:roundFinalized', (result: BuzzerRoundResult) => {
+      console.log('Buzzer round finalized:', result);
+      this.buzzerRoundCompletedSubject.next(result);
+      this.activeBuzzerUserSubject.next(null);
+    });
+
+    this.socket.on('buzzer:evaluated', (judgment: BuzzerJudgment) => {
+      console.log('Buzzer evaluated:', judgment);
+      this.buzzerJudgmentSubject.next(judgment);
     });
   }
 
@@ -507,5 +567,108 @@ export class LobbyService {
 
   onAllPointsReset(): Observable<User[]> {
     return this.allPointsResetSubject.asObservable();
+  }
+
+  // New methods for buzzer judgment
+
+  /**
+   * Complete a buzzer round with judgment, sending only one message to the server
+   * Match the server's expected event name and payload structure
+   */
+  completeBuzzerRoundWithJudgment(
+    lobbyCode: string,
+    buzzerUserId: string,
+    username: string,
+    isCorrect: boolean
+  ): void {
+    console.log(
+      `Completing buzzer round for ${username} with judgment: ${
+        isCorrect ? 'correct' : 'incorrect'
+      }`
+    );
+
+    // Update to match index.js expected event and payload
+    this.socket.emit('buzzer:judge', {
+      lobbyCode,
+      socketId: buzzerUserId, // Ensure we use the field name expected by server
+      username,
+      correct: isCorrect, // Ensure we use the field name expected by server
+      questionIndex: this.gameStateSubject.value?.currentQuestionIndex || 0,
+    });
+  }
+
+  // Keep this method for backward compatibility or server-initiated resets
+  /**
+   * Reset the buzzer state for a lobby (clear all buzzers)
+   * @param lobbyCode The lobby code
+   */
+  resetBuzzers(lobbyCode: string): void {
+    console.log('Resetting buzzers for lobby:', lobbyCode);
+    this.socket.emit('buzzer:reset', lobbyCode);
+    this.activeBuzzerUserSubject.next(null);
+  }
+
+  /**
+   * Get an observable for buzzer judgment events
+   */
+  onBuzzerJudgment(): Observable<BuzzerJudgment> {
+    return this.buzzerJudgmentSubject.asObservable();
+  }
+
+  /**
+   * Get an observable for completed buzzer round events
+   */
+  onBuzzerRoundCompleted(): Observable<BuzzerRoundResult> {
+    return this.buzzerRoundCompletedSubject.asObservable();
+  }
+
+  /**
+   * Get an observable for the active buzzer user
+   */
+  getActiveBuzzerUser(): Observable<{
+    socketId: string;
+    username: string;
+  } | null> {
+    return this.activeBuzzerUserSubject.asObservable();
+  }
+
+  /**
+   * Get the current active buzzer user
+   */
+  getCurrentActiveBuzzerUser(): { socketId: string; username: string } | null {
+    return this.activeBuzzerUserSubject.value;
+  }
+
+  /**
+   * Judge a buzzer answer without completing the round
+   * @param lobbyCode The lobby code
+   * @param buzzerUserId The socket ID of the user who buzzed
+   * @param isCorrect Whether the answer is correct
+   * @param username The username of the user who buzzed
+   */
+  evaluateBuzzerAnswer(
+    lobbyCode: string,
+    buzzerUserId: string,
+    isCorrect: boolean,
+    username: string
+  ): void {
+    console.log(
+      `Evaluating buzzer answer as ${isCorrect ? 'correct' : 'incorrect'}`
+    );
+
+    // Match the server's buzzer:evaluate event
+    this.socket.emit('buzzer:evaluate', lobbyCode, isCorrect);
+  }
+
+  /**
+   * Complete a buzzer round, which will award points if answer was correct
+   * @param lobbyCode The lobby code
+   * @param addPoints Whether to award points for correct answer
+   */
+  finalizeBuzzerRound(lobbyCode: string, addPoints: boolean = true): void {
+    console.log(`Finalizing buzzer round, addPoints: ${addPoints}`);
+
+    // Match the server's buzzer:finalizeRound event
+    this.socket.emit('buzzer:finalizeRound', lobbyCode, addPoints);
   }
 }

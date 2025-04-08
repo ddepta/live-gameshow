@@ -193,11 +193,43 @@
           isModerator && !questionSentToParticipants
         "
       >
-        <app-buzzer
-          [lobbyCode]="lobbyCode"
-          [isModerator]="isModerator"
-          size="large"
-        ></app-buzzer>
+        <div class="buzzer-with-icons">
+          <button
+            *ngIf="isModerator && activeBuzzerUser"
+            class="buzzer-side-button check-button"
+            [class.active]="currentBuzzerJudgment === true"
+            (click)="judgeBuzzerAnswer(true)"
+          >
+            <ng-icon name="phosphorCheckFat"></ng-icon>
+          </button>
+
+          <app-buzzer
+            [lobbyCode]="lobbyCode"
+            [isModerator]="isModerator"
+            size="large"
+          ></app-buzzer>
+
+          <button
+            *ngIf="isModerator && activeBuzzerUser"
+            class="buzzer-side-button reject-button"
+            [class.active]="currentBuzzerJudgment === false"
+            (click)="judgeBuzzerAnswer(false)"
+          >
+            <ng-icon name="phosphorX"></ng-icon>
+          </button>
+        </div>
+
+        <!-- Moderator controls for buzzer judgment -->
+        <div *ngIf="isModerator" class="buzzer-judgment-controls">
+          <p-button
+            type="button"
+            label="RUNDE ABSCHLIESSEN"
+            icon="pi pi-flag-fill"
+            class="complete-round-button"
+            [disabled]="currentBuzzerJudgment === null || !activeBuzzerUser"
+            (click)="completeBuzzerRound()"
+          ></p-button>
+        </div>
       </div>
 
       <!-- Estimation section with conditional blur -->

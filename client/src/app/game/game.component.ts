@@ -10,17 +10,26 @@ import {
   HostListener,
 } from '@angular/core';
 import { GameService, GameData, Question } from '../game.service';
-import { LobbyService, SubmittedAnswer } from '../lobbys/lobby.service';
+import {
+  LobbyService,
+  SubmittedAnswer,
+  BuzzerJudgment,
+  BuzzerRoundResult,
+} from '../lobbys/lobby.service';
 import { BuzzerComponent } from '../lobbys/buzzer/buzzer.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { phosphorCheckFatFill } from '@ng-icons/phosphor-icons/fill';
+import {
+  phosphorCheckFatFill,
+  phosphorFlagFill,
+} from '@ng-icons/phosphor-icons/fill';
 import {
   phosphorCheckFat,
   phosphorEye,
   phosphorEyeSlash,
+  phosphorX,
 } from '@ng-icons/phosphor-icons/regular';
 import { typChevronLeft, typChevronRight } from '@ng-icons/typicons';
 import { Subscription } from 'rxjs';
@@ -38,6 +47,8 @@ import { Subscription } from 'rxjs';
       phosphorCheckFat,
       phosphorEye,
       phosphorEyeSlash,
+      phosphorX,
+      phosphorFlagFill,
     }),
   ],
   templateUrl: './game.component.html',
@@ -71,6 +82,16 @@ export class GameComponent implements OnInit, OnDestroy {
   // Submitted answers from all users
   submittedAnswers: SubmittedAnswer[] = [];
   currentQuestionAnswers: SubmittedAnswer[] = [];
+
+  // Active buzzer user
+  activeBuzzerUser: { socketId: string; username: string } | null = null;
+
+  // Local state for buzzer judgment - store locally instead of sending to server
+  currentBuzzerJudgment: boolean | null = null;
+
+  // Buzzer judgment tracking
+  lastJudgment: BuzzerJudgment | null = null;
+  lastRoundResult: BuzzerRoundResult | null = null;
 
   private subscriptions: Subscription[] = [];
 
@@ -141,6 +162,30 @@ export class GameComponent implements OnInit, OnDestroy {
         console.log('Received answers in component:', answers);
         this.submittedAnswers = answers;
         this.updateCurrentQuestionAnswers();
+      })
+    );
+
+    // Add subscription for active buzzer user
+    this.subscriptions.push(
+      this.lobbyService.getActiveBuzzerUser().subscribe((user) => {
+        console.log('Active buzzer user changed:', user);
+        this.activeBuzzerUser = user;
+      })
+    );
+
+    // Subscribe to buzzer judgments
+    this.subscriptions.push(
+      this.lobbyService.onBuzzerJudgment().subscribe((judgment) => {
+        console.log('Received buzzer judgment:', judgment);
+        this.lastJudgment = judgment;
+      })
+    );
+
+    // Subscribe to buzzer round completions
+    this.subscriptions.push(
+      this.lobbyService.onBuzzerRoundCompleted().subscribe((result) => {
+        console.log('Buzzer round completed:', result);
+        this.lastRoundResult = result;
       })
     );
   }
@@ -395,5 +440,63 @@ export class GameComponent implements OnInit, OnDestroy {
   @HostListener('window:resize')
   onResize(): void {
     // Implement any responsive adjustments if needed
+  }
+
+  // New methods for buzzer judgment
+
+  /**
+   * Judge the active buzzer user's answer without completing the round
+   * @param isCorrect Whether the answer is correct
+   */
+  judgeBuzzerAnswer(isCorrect: boolean): void {
+    if (!this.activeBuzzerUser) {
+      console.warn('No active buzzer user to judge');
+      return;
+    }
+
+    console.log(`Judging answer as ${isCorrect ? 'correct' : 'incorrect'}`);
+
+    // Store judgment locally
+    this.currentBuzzerJudgment = isCorrect;
+
+    // Send evaluation to server
+    this.lobbyService.evaluateBuzzerAnswer(
+      this.lobbyCode,
+      this.activeBuzzerUser.socketId,
+      isCorrect,
+      this.activeBuzzerUser.username
+    );
+  }
+
+  /**
+   * Complete the buzzer round and award points if answer was judged correct
+   */
+  completeBuzzerRound(): void {
+    console.log('Finalizing buzzer round');
+
+    if (!this.activeBuzzerUser) {
+      console.warn('Cannot complete round: No active buzzer user');
+      return;
+    }
+
+    if (this.currentBuzzerJudgment === null) {
+      console.warn('Cannot complete round: No judgment made');
+      return;
+    }
+
+    // The true parameter means "add points if answer was correct"
+    this.lobbyService.finalizeBuzzerRound(this.lobbyCode, true);
+
+    // Reset the local judgment state
+    this.currentBuzzerJudgment = null;
+  }
+
+  /**
+   * Reset all buzzers in the lobby and clear local judgment
+   */
+  resetBuzzers(): void {
+    console.log('Resetting buzzers');
+    this.lobbyService.resetBuzzers(this.lobbyCode);
+    this.currentBuzzerJudgment = null;
   }
 }

@@ -371,7 +371,7 @@
   flex-direction: column;
   align-items: center;
   gap: 20px;
-  margin-top: 8vh;
+  margin-top: 2vh;
 }
 
 .estimation-input-container {
@@ -602,16 +602,6 @@
       &:hover {
         background-color: var(--p-green-600);
         border-color: var(--p-green-600);
-      }
-    }
-
-    &.p-button-info {
-      background-color: var(--p-blue-500);
-      border-color: var(--p-blue-500);
-
-      &:hover {
-        background-color: var(--p-blue-600);
-        border-color: var(--p-blue-600);
       }
     }
   }
@@ -982,3 +972,115 @@
 //     }
 //   }
 // }
+
+/* Buzzer judgment controls styling */
+.buzzer-judgment-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  width: 100%;
+  max-width: 500px;
+}
+
+.active-buzzer-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 15px;
+  background-color: var(--p-surface-800);
+  border-radius: 6px;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.active-user-label {
+  font-weight: bold;
+  color: var(--p-primary-300);
+}
+
+.active-username {
+  font-size: 1.2em;
+  color: var(--p-primary-color);
+  font-weight: bold;
+}
+
+.buzzer-buttons {
+  display: flex;
+  gap: 20px;
+  width: 100%;
+  margin-bottom: 15px;
+}
+
+/* Empty state styling */
+.no-buzzer-user {
+  color: var(--p-primary-300);
+  font-style: italic;
+  text-align: center;
+  margin: 10px 0;
+}
+
+// Add styles for the buzzer with flanking buttons
+.buzzer-with-icons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+  width: 100%;
+}
+
+.buzzer-side-button {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 2px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  background-color: transparent;
+
+  ng-icon {
+    font-size: 30px;
+  }
+
+  &:hover {
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+.check-button {
+  color: var(--p-primary-500);
+  border-color: var(--p-primary-500);
+
+  &:hover {
+    background-color: var(--p-primary-950);
+  }
+
+  &.active {
+    background-color: var(--p-primary-700);
+    color: var(--p-surface-100);
+    border-color: var(--p-primary-800);
+  }
+}
+
+.reject-button {
+  color: var(--p-red-500);
+  border-color: var(--p-red-500);
+
+  &:hover {
+    background-color: var(--p-red-950);
+  }
+
+  &.active {
+    background-color: var(--p-red-700);
+    color: white;
+    border-color: var(--p-red-700);
+  }
+}
