@@ -5,6 +5,7 @@
   width: 100%;
   min-width: 0; /* Allow container to shrink */
   overflow: hidden; /* Prevent overflow */
+  padding-bottom: 20px; /* Add padding to the bottom */
 }
 
 .game-header {
@@ -54,10 +55,15 @@
   width: 100%;
   border: 2px solid var(--p-primary-color);
   border-radius: 8px;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
   background-color: var(--p-surface-card);
   flex: 1;
   overflow: hidden;
   min-height: 0; /* Allow container to resize properly */
+  margin-bottom: -10px; /* Create overlap with answer container */
+  position: relative;
+  z-index: 2; /* Make sure it's above answer container */
 }
 
 .game-info {
@@ -65,17 +71,10 @@
   overflow-y: auto;
   flex: 1;
   min-height: 0; /* Allow proper scrolling */
-  border-bottom: none; /* Remove border between sections */
-  padding-bottom: 30px; /* Add padding at bottom for visual space */
   position: relative;
   background-color: var(--p-surface-950);
-  /* Remove the pseudo-element that was creating top-rounded corners on question-nav */
-
-  /* Add border radius to the game-info bottom instead */
-  border-bottom-left-radius: 10px;
-  border-bottom-right-radius: 10px;
-  margin-bottom: -10px; /* Overlap with question-nav */
-  z-index: 2; /* Ensure the rounded corners show over question-nav */
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
 }
 
 .game-title {
@@ -87,7 +86,6 @@
   font-size: 28px;
   margin-top: 0;
   margin-bottom: 20px;
-  text-transform: uppercase;
 }
 
 // Fix the grid layout to ensure they match
@@ -363,6 +361,33 @@
       font-weight: normal;
     }
   }
+
+  &.correct-answer .p-button {
+    box-shadow: 0 0 20px 0px var(--p-green-500);
+    border-color: var(--p-green-500);
+    animation: pulse-glow 2s infinite;
+
+    &.p-button-outlined {
+      color: var(--p-green-500);
+    }
+
+    &:not(.p-button-outlined) {
+      background-color: var(--p-green-500);
+      border-color: var(--p-green-500);
+    }
+  }
+}
+
+@keyframes pulse-glow {
+  0% {
+    box-shadow: 0 0 15px 0px var(--p-green-500);
+  }
+  50% {
+    box-shadow: 0 0 30px 5px var(--p-green-500);
+  }
+  100% {
+    box-shadow: 0 0 15px 0px var(--p-green-500);
+  }
 }
 
 .buzzer-container,
@@ -409,15 +434,15 @@
   overflow: auto;
   appearance: none;
 
-  &::placeholder {
-    color: rgba(var(--p-primary-rgb), 0.5);
-    line-height: 22vh; /* Center placeholder too */
-  }
+  // &::placeholder {
+  //   color: rgba(var(--p-primary-rgb), 0.5);
+  //   line-height: 22vh; /* Center placeholder too */
+  // }
 
-  &:focus {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(var(--p-primary-rgb), 0.3);
-  }
+  // &:focus {
+  //   outline: none;
+  //   box-shadow: 0 0 0 3px rgba(var(--p-primary-rgb), 0.3);
+  // }
 
   /* Additional styles for disabled state */
   &:disabled {
@@ -436,10 +461,30 @@
 }
 
 .answer-container {
-  // aka game-info
-  overflow-y: auto;
-  min-height: 0; /* Allow proper scrolling */
+  width: 100%;
   position: relative;
+  z-index: 1; /* Below game-info for overlap */
+  margin-top: -5px; /* Create negative margin for overlap */
+  background-color: var(--p-primary-500);
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+  border: 2px solid var(--p-primary-color);
+  border-top: none;
+  transform-origin: top center; /* Set transform origin to top */
+  padding-top: 10px;
+
+  &.answer-reveal {
+    animation: slideAnswerIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  &.answer-hide {
+    animation: slideAnswerOut 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  &.answer-hidden {
+    visibility: hidden;
+    transform: translateY(-100%);
+  }
 }
 
 // Match the exact grid structure
@@ -452,22 +497,23 @@
   display: grid;
   grid-template-columns: 130px 1fr 0 0 150px; // Same as question-content
   align-items: center;
-  padding-top: 10px;
+  padding-top: 2px;
   padding-right: 20px;
   padding-left: 20px;
+  padding-bottom: 2px;
   border-top: none;
-  background-color: var(--p-primary-500);
+  background-color: transparent;
   position: relative;
   z-index: 1;
-  border-bottom-left-radius: 6px;
-  border-bottom-right-radius: 6px;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
   cursor: pointer;
   transition: filter 0.3s ease;
 
   .blurred {
-    filter: blur(5px);
+    filter: blur(7px);
 
-    :hover {
+    &:hover {
       filter: blur(3px);
     }
   }
@@ -531,6 +577,32 @@
   //     box-shadow: 0 0 10px rgba(var(--p-blue-rgb), 0.3);
   //   }
   // }
+}
+
+@keyframes slideAnswerIn {
+  from {
+    transform: translateY(-100%);
+    opacity: 0.5;
+    visibility: visible;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+@keyframes slideAnswerOut {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+  }
+  to {
+    transform: translateY(-100%);
+    opacity: 0;
+    visibility: hidden;
+  }
 }
 
 .loading-info {
@@ -770,9 +842,12 @@
 }
 
 .answers-list {
+  width: 60%;
+  margin: 20px auto;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  margin-bottom: 35px;
 }
 
 .answer-item {
@@ -781,34 +856,132 @@
   background-color: var(--p-surface-800);
   padding: 12px 15px;
   border-radius: 6px;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, border-left-color 0.2s;
   border-left: 4px solid var(--p-primary-color);
+  align-items: center; /* Add this to vertically center the content */
+  position: relative; /* For positioning the judgment result */
 
   &:hover {
     background-color: var(--p-surface-700);
   }
+
+  /* Change border color for judged answers */
+  &.answer-correct {
+    border-left-color: var(--p-green-500);
+  }
+
+  &.answer-incorrect {
+    border-left-color: var(--p-red-500);
+  }
+
+  /* Structure the content */
+  .answer-meta {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .answer-value {
+    font-weight: bold;
+    font-size: 1.1em;
+    color: #fff;
+    flex: 1;
+    margin: 0 15px;
+  }
 }
 
-.answer-meta {
+/* Add styles for the judgment buttons */
+.answer-judgment {
   display: flex;
-  flex-direction: column;
+  gap: 10px;
 }
 
-.answer-user {
-  font-weight: bold;
-  color: var(--p-primary-300);
+.judgment-button {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background-color: transparent;
+  transition: all 0.2s ease;
+
+  ng-icon {
+    font-size: 20px;
+  }
+
+  &:hover {
+    transform: scale(1.1);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  &.active {
+    transform: scale(1.15);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  }
 }
 
-.answer-type {
-  font-size: 12px;
-  color: var(--p-primary-400);
-  margin-top: 3px;
+.correct-button {
+  color: var(--p-green-500);
+  border-color: var(--p-green-500);
+
+  &:hover {
+    background-color: rgba(var(--p-green-rgb), 0.1);
+  }
+
+  &.active {
+    background-color: var(--p-green-500);
+    color: white;
+  }
 }
 
-.answer-value {
-  color: #fff;
-  font-weight: bold;
-  font-size: 1.1em;
+.incorrect-button {
+  color: var(--p-red-500);
+  border-color: var(--p-red-500);
+
+  &:hover {
+    background-color: rgba(var(--p-red-rgb), 0.1);
+  }
+
+  &.active {
+    background-color: var(--p-red-500);
+    color: white;
+  }
+}
+
+/* Style the judgment result icon */
+.judgment-result {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.judgment-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+
+  ng-icon {
+    font-size: 20px;
+  }
+
+  &.correct {
+    color: var(--p-green-500);
+  }
+
+  &.incorrect {
+    color: var(--p-red-500);
+  }
 }
 
 .no-answers {
@@ -1082,5 +1255,47 @@
     background-color: var(--p-red-700);
     color: white;
     border-color: var(--p-red-700);
+  }
+}
+
+// New animation for the answer reveal
+@keyframes slideAnswerIn {
+  from {
+    transform: translateY(-100%);
+    opacity: 0.5;
+    visibility: visible;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+// Add reverse animation for answer hiding
+@keyframes slideAnswerOut {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+  }
+  to {
+    transform: translateY(-100%);
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+// Update the question-answer class
+.question-answer {
+  // ...existing code...
+
+  // Add animation properties
+  &.answer-reveal {
+    animation: slideAnswerIn 0.5s ease forwards;
+  }
+
+  &.answer-hidden {
+    visibility: hidden;
   }
 }

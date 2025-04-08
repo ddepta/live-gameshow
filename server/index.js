@@ -87,7 +87,7 @@ io.use((socket, next) => {
 });
 
 io.on("connection", (socket) => {
-  console.log("a user connected");
+  console.log("a user connected with socket ID:", socket.id);
 
   // Update message handler to send messages with separate username field
   socket.on("message", (messageText) => {
@@ -114,7 +114,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("lobby:join", (lobbyCode, username, callback) => {
-    console.log("lobby:joined");
+    console.log("lobby:joined with socket ID:", socket.id);
     var validUsername = handleUsername(username, callback);
 
     if (validUsername) {
@@ -669,13 +669,15 @@ io.on("connection", (socket) => {
           lobby.submittedAnswers = [];
         }
 
-        // Create the answer entry
+        // Create the answer entry with a unique ID to help with updates
         const answerEntry = {
+          id: `${foundUser.username}-${questionIndex}-${Date.now()}`,
           username: foundUser.username,
           questionIndex: questionIndex,
           answer: answer,
           type: type,
           timestamp: Date.now(),
+          socketId: socket.id, // Add socket ID to identify the user more reliably
         };
 
         // Check if user already submitted answer for this question
@@ -701,12 +703,21 @@ io.on("connection", (socket) => {
           { questionIndex, answer, type }
         );
 
-        // Create update payload with all answers (so we can debug the mismatch)
+        // Get all answers for the current question
+        const currentQuestionAnswers = lobby.submittedAnswers.filter(
+          (a) => a.questionIndex === questionIndex
+        );
+
+        // Create detailed update payload
         const updatePayload = {
           lobbyCode: lobbyCode,
-          answers: lobby.submittedAnswers,
+          answers: lobby.submittedAnswers, // All answers
+          currentQuestionAnswers: currentQuestionAnswers, // Answers for current question only
+          questionIndex: questionIndex,
           currentQuestionState: {
             index: lobby.gameState.currentQuestionIndex,
+            total: currentQuestionAnswers.length,
+            usernames: currentQuestionAnswers.map((a) => a.username),
           },
         };
 
@@ -1026,26 +1037,62 @@ io.on("connection", (socket) => {
   }
 
   function addUser(lobbyCode, username) {
-    var lobbys = [];
-    lobbys.push({ lobbyCode: lobbyCode, socketId: socket.id });
+    // Rename the variable to avoid shadowing the global lobbys array
+    var userLobbies = [];
+    userLobbies.push({ lobbyCode: lobbyCode, socketId: socket.id });
 
-    console.log("addUser", username, lobbys);
+    console.log(
+      "addUser",
+      username,
+      "socketId:",
+      socket.id,
+      "lobbyCode:",
+      lobbyCode
+    );
 
     const userIndex = users.findIndex((user) => user.username === username);
     console.log("addUser - userIndex:", userIndex);
 
     if (userIndex != -1) {
-      users[userIndex].lobbys.push({
-        lobbyCode: lobbyCode,
-        socketId: socket.id,
-      });
+      // Update existing user's lobbies
+      const lobbyExists = users[userIndex].lobbys.some(
+        (lobby) => lobby.lobbyCode === lobbyCode
+      );
+
+      if (!lobbyExists) {
+        users[userIndex].lobbys.push({
+          lobbyCode: lobbyCode,
+          socketId: socket.id,
+        });
+        console.log(
+          `Added lobby ${lobbyCode} to existing user ${username} with socket ${socket.id}`
+        );
+      } else {
+        // Update socket ID for existing lobby
+        const lobbyIndex = users[userIndex].lobbys.findIndex(
+          (lobby) => lobby.lobbyCode === lobbyCode
+        );
+        if (lobbyIndex !== -1) {
+          console.log(
+            `Updated socket ID for user ${username} in lobby ${lobbyCode} from ${users[userIndex].lobbys[lobbyIndex].socketId} to ${socket.id}`
+          );
+          users[userIndex].lobbys[lobbyIndex].socketId = socket.id;
+        }
+      }
       users[userIndex].username = username;
     } else {
+      // Add new user
       users.push({
         username: username,
-        lobbys: lobbys,
+        lobbys: userLobbies,
       });
+      console.log(
+        `Added new user ${username} with socket ${socket.id} for lobby ${lobbyCode}`
+      );
     }
+
+    // Debug output to see the full users array
+    console.log("Current users array:", JSON.stringify(users, null, 2));
   }
 
   function addUserToLobby(lobbyCode, username) {
@@ -1162,12 +1209,21 @@ io.on("connection", (socket) => {
   }
 
   function buzzerStateChanged(action, lobbyCode) {
+    // Add more robust logging
+    console.log(
+      `buzzerStateChanged called - action: ${action}, lobbyCode: ${lobbyCode}, socketId: ${socket.id}`
+    );
+
     var foundUser = findUserBySocketId(socket.id);
 
     if (foundUser) {
       console.log("buzzerStateChanged", action, lobbyCode, foundUser);
 
       const index = lobbys.findIndex((lobby) => lobby.lobbyCode === lobbyCode);
+      if (index === -1) {
+        console.log(`Lobby ${lobbyCode} not found`);
+        return;
+      }
 
       currentBuzzerState = {
         action: action,
@@ -1195,6 +1251,63 @@ io.on("connection", (socket) => {
         "user not found, socketId: ",
         socket.id
       );
+
+      // Try to recover by checking if this socket is in any lobby's users array
+      const lobbyWithUser = lobbys.find(
+        (lobby) =>
+          lobby.users.some((user) => user.socketId === socket.id) ||
+          (lobby.moderator && lobby.moderator.socketId === socket.id)
+      );
+
+      if (lobbyWithUser) {
+        // Found the user in a lobby, try to get their username
+        const userInLobby = lobbyWithUser.users.find(
+          (user) => user.socketId === socket.id
+        );
+        const username = userInLobby
+          ? userInLobby.username
+          : lobbyWithUser.moderator &&
+            lobbyWithUser.moderator.socketId === socket.id
+          ? lobbyWithUser.moderator.username
+          : "Unknown User";
+
+        console.log(
+          `User found in lobby but not in users array. Username: ${username}, fixing...`
+        );
+
+        // Recreate the user entry in the users array
+        const userLobbies = [];
+        userLobbies.push({ lobbyCode, socketId: socket.id });
+
+        users.push({
+          username: username,
+          lobbys: userLobbies,
+        });
+
+        // Now try the buzzer action again
+        currentBuzzerState = {
+          action: action,
+          socketId: socket.id,
+          username: username,
+          data: "",
+          evaluation:
+            action === "buzzer:pressed"
+              ? {
+                  isCorrect: null,
+                  evaluatedAt: null,
+                  finalized: false,
+                }
+              : null,
+        };
+
+        const lobbyIndex = lobbys.findIndex((l) => l.lobbyCode === lobbyCode);
+        if (lobbyIndex !== -1) {
+          lobbys[lobbyIndex].currentBuzzerState = currentBuzzerState;
+          addEventToLobbyEventHistory(lobbyCode, action, username, "");
+          emitMessage(lobbyCode, action, username);
+          console.log(`Recovered buzzer action for ${username}`);
+        }
+      }
     }
   }
 
@@ -1382,12 +1495,30 @@ io.on("connection", (socket) => {
 });
 
 function findUserBySocketId(socketId) {
+  // Improved error handling and debugging
+  if (!socketId) {
+    console.log("findUserBySocketId called with null/undefined socketId");
+    return null;
+  }
+
+  console.log(`Finding user by socketId: ${socketId}`);
+
   for (const user of users) {
+    // Check if this user has any lobbies with this socketId
     const foundLobby = user.lobbys.find((lobby) => lobby.socketId === socketId);
     if (foundLobby) {
+      console.log(
+        `Found user ${user.username} with socket ${socketId} in lobby ${foundLobby.lobbyCode}`
+      );
       return user;
     }
   }
+
+  // If we get here, no user was found with this socket ID
+  console.log(
+    `No user found with socket ${socketId}. Current socket IDs in system:`,
+    users.flatMap((user) => user.lobbys.map((l) => l.socketId))
+  );
   return null;
 }
 

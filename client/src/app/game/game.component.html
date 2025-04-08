@@ -12,6 +12,7 @@
     <div
       class="game-view-container"
       *ngIf="isModerator || isQuestionVisibleToParticipants"
+      [class.animate-border]="!isModerator && answerAnimationActive"
     >
       <div class="game-info">
         <div class="question-content">
@@ -71,21 +72,36 @@
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Answer section - exactly match question-content structure -->
-      <div class="answer-container"></div>
-      <div
-        *ngIf="isModerator || isAnswerVisibleToParticipants"
-        class="question-answer"
-      >
+    <!-- Answer section moved outside game-view-container -->
+    <div
+      *ngIf="
+        (isModerator ||
+          isAnswerVisibleToParticipants ||
+          answerAnimationActive) &&
+        (isModerator || isQuestionVisibleToParticipants)
+      "
+      class="answer-container"
+      [class.answer-reveal]="
+        !isModerator && answerAnimationActive && !isHidingAnswer
+      "
+      [class.answer-hide]="
+        !isModerator && answerAnimationActive && isHidingAnswer
+      "
+      [class.answer-hidden]="
+        !isModerator && !answerAnimationActive && !isAnswerVisibleToParticipants
+      "
+    >
+      <div class="question-answer">
         <!-- Left space - match nav-left-container structure -->
         <div class="answer-left-container"></div>
 
         <!-- Center answer text - match question-text structure -->
         <div
           class="correct-answer-text"
-          [class.blurred]="isAnswerBlurred"
-          (click)="toggleAnswerBlur()"
+          [class.blurred]="isModerator && isAnswerBlurred"
+          (click)="isModerator && toggleAnswerBlur()"
         >
           Antwort: {{ currentQuestion.correctAnswer }}
         </div>
@@ -135,7 +151,8 @@
             *ngFor="let option of currentQuestion.options"
             [class.moderator-option]="isModerator"
             [class.correct-answer]="
-              isModerator && option === currentQuestion.correctAnswer
+              answerSentToParticipants &&
+              option === currentQuestion.correctAnswer
             "
           >
             <p-button
@@ -183,6 +200,21 @@
             "
           ></ng-icon>
         </button>
+
+        <!-- Add the complete round button for moderators -->
+        <div *ngIf="isModerator">
+          <p-button
+            type="button"
+            label="RUNDE ABSCHLIESSEN"
+            icon="pi pi-flag-fill"
+            class="complete-round-button"
+            [disabled]="
+              multipleChoiceRoundCompleted ||
+              currentQuestionAnswers.length === 0
+            "
+            (click)="completeMultipleChoiceRound()"
+          ></p-button>
+        </div>
       </div>
 
       <!-- Buzzer section with conditional blur -->
@@ -270,9 +302,8 @@
       </div>
     </ng-container>
 
-    <!-- Moderator view: Display submitted answers - only show for estimation questions -->
+    <!-- Moderator view: Display submitted answers with judgment controls for estimation questions -->
     <div
-      class="submitted-answers-container"
       *ngIf="isModerator && currentQuestion.type === 'estimation'"
       [class.moderator-content-blurred]="
         isModerator && !questionSentToParticipants
@@ -284,7 +315,14 @@
         class="answers-list"
         *ngIf="currentQuestionAnswers && currentQuestionAnswers.length > 0"
       >
-        <div class="answer-item" *ngFor="let answer of currentQuestionAnswers">
+        <div
+          class="answer-item"
+          *ngFor="let answer of currentQuestionAnswers"
+          [class.answer-correct]="isEstimationCorrect(answer)"
+          [class.answer-incorrect]="
+            isEstimationJudged(answer) && !isEstimationCorrect(answer)
+          "
+        >
           <div class="answer-meta">
             <div class="answer-user">{{ answer.username }}</div>
             <div class="answer-type">
@@ -296,13 +334,52 @@
             </div>
           </div>
           <div class="answer-value">{{ answer.answer }}</div>
+
+          <!-- Replace the existing judgment buttons/result section with a version that always shows buttons -->
+          <div class="answer-judgment">
+            <button
+              class="judgment-button correct-button"
+              [class.active]="isEstimationCorrect(answer)"
+              (click)="judgeEstimationAnswer(answer, true)"
+              title="Richtige Antwort"
+            >
+              <ng-icon
+                [name]="
+                  isEstimationCorrect(answer)
+                    ? 'phosphorCheckFatFill'
+                    : 'phosphorCheckFat'
+                "
+              ></ng-icon>
+            </button>
+            <button
+              class="judgment-button incorrect-button"
+              [class.active]="
+                isEstimationJudged(answer) && !isEstimationCorrect(answer)
+              "
+              (click)="judgeEstimationAnswer(answer, false)"
+              title="Falsche Antwort"
+            >
+              <ng-icon name="phosphorX"></ng-icon>
+            </button>
+          </div>
+        </div>
+        <div
+          class="no-answers"
+          *ngIf="!currentQuestionAnswers || currentQuestionAnswers.length === 0"
+        >
+          <p>Noch keine Antworten eingegangen.</p>
         </div>
       </div>
-      <div
-        class="no-answers"
-        *ngIf="!currentQuestionAnswers || currentQuestionAnswers.length === 0"
-      >
-        <p>Noch keine Antworten eingegangen.</p>
+      <!-- Add Complete Round button for estimation questions -->
+      <div *ngIf="isModerator">
+        <p-button
+          type="button"
+          label="RUNDE ABSCHLIESSEN"
+          icon="pi pi-flag-fill"
+          class="complete-round-button"
+          [disabled]="estimationRoundCompleted || !hasEstimationJudgments()"
+          (click)="completeEstimationRound()"
+        ></p-button>
       </div>
     </div>
 

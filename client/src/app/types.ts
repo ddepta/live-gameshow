@@ -66,3 +66,26 @@ export interface GameState {
   isQuestionVisible: boolean;
   isAnswerVisible: boolean;
 }
+
+// Add these new interfaces
+export interface SubmittedAnswer {
+  id?: string; // Add optional ID field
+  username: string;
+  questionIndex: number;
+  answer: string;
+  type: 'multipleChoice' | 'estimation';
+  timestamp: number;
+  socketId?: string; // Add optional socketId for user identification
+}
+
+export interface AnswerUpdate {
+  lobbyCode: string;
+  answers: SubmittedAnswer[];
+  currentQuestionAnswers?: SubmittedAnswer[]; // Add for question-specific answers
+  questionIndex?: number; // Add question index from the update
+  currentQuestionState?: {
+    index: number;
+    total: number;
+    usernames: string[];
+  };
+}

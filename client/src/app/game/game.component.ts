@@ -99,6 +99,21 @@ export class GameComponent implements OnInit, OnDestroy {
   @ViewChild('estimationInput')
   estimationInput!: ElementRef<HTMLTextAreaElement>;
 
+  // Add tracking for multiple choice round state
+  multipleChoiceRoundCompleted = false;
+
+  // Add new property to track answer animation state
+  answerAnimationActive = false;
+
+  // Add new property to track hiding animation state
+  isHidingAnswer = false;
+
+  // Add new property to track judged estimation answers
+  estimationJudgments: { [answerId: string]: boolean } = {};
+
+  // Add tracking for estimation round state
+  estimationRoundCompleted = false;
+
   constructor(
     private gameService: GameService,
     private lobbyService: LobbyService
@@ -130,10 +145,35 @@ export class GameComponent implements OnInit, OnDestroy {
         this.isQuestionVisibleToParticipants = false;
       }),
       this.lobbyService.onAnswerVisible().subscribe(() => {
+        // When answer becomes visible, activate animation for participants
+        if (!this.isModerator) {
+          this.answerAnimationActive = true;
+          // Reset animation flag after animation completes
+          setTimeout(() => {
+            this.answerAnimationActive = false;
+          }, 600); // Match animation duration
+        }
         this.isAnswerVisibleToParticipants = true;
       }),
       this.lobbyService.onAnswerHidden().subscribe(() => {
-        this.isAnswerVisibleToParticipants = false;
+        // When answer is hidden, activate hide animation for participants
+        if (!this.isModerator && this.isAnswerVisibleToParticipants) {
+          // First, set a flag to track that we're specifically hiding (not showing)
+          this.isHidingAnswer = true;
+
+          // Keep the element in the DOM but mark it for hiding
+          this.answerAnimationActive = true;
+          this.isAnswerVisibleToParticipants = false;
+
+          // Reset animation flags after animation completes
+          setTimeout(() => {
+            this.answerAnimationActive = false;
+            this.isHidingAnswer = false;
+          }, 600); // Match animation duration
+        } else {
+          // For moderator, immediately update the visibility
+          this.isAnswerVisibleToParticipants = false;
+        }
       }),
 
       // Update the question changed subscription to handle animations for participants
@@ -283,6 +323,11 @@ export class GameComponent implements OnInit, OnDestroy {
       this.multipleChoiceSubmitted = false;
       this.estimationSubmitted = false;
 
+      // Reset round state
+      this.multipleChoiceRoundCompleted = false;
+      this.estimationRoundCompleted = false;
+      this.resetEstimationJudgments();
+
       // Always reset the answer blur when changing questions
       this.isAnswerBlurred = true;
 
@@ -349,6 +394,15 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   setAnswerVisibility(visible: boolean): void {
+    // Automatically remove blur when moderator makes question visible
+    if (visible && this.isModerator) {
+      this.isAnswerBlurred = false;
+    }
+    // Automatically remove blur when moderator makes question visible
+    if (!visible && this.isModerator) {
+      this.isAnswerBlurred = true;
+    }
+
     this.answerSentToParticipants = visible;
     this.lobbyService.toggleAnswerVisibility(this.lobbyCode, visible);
   }
@@ -498,5 +552,218 @@ export class GameComponent implements OnInit, OnDestroy {
     console.log('Resetting buzzers');
     this.lobbyService.resetBuzzers(this.lobbyCode);
     this.currentBuzzerJudgment = null;
+  }
+
+  /**
+   * Complete the multiple choice round and award points to users with correct answers
+   */
+  completeMultipleChoiceRound(): void {
+    console.log('Completing multiple choice round');
+
+    if (this.multipleChoiceRoundCompleted) {
+      console.warn('Round already completed');
+      return;
+    }
+
+    if (
+      !this.currentQuestion ||
+      this.currentQuestion.type !== 'multipleChoice'
+    ) {
+      console.warn('Not a multiple choice question');
+      return;
+    }
+
+    // Show the answer to all participants
+    this.setAnswerVisibility(true);
+
+    // Get all users who selected the correct option
+    // Convert correctAnswer to string to match the getUsersForOption parameter type
+    const correctOption = String(this.currentQuestion.correctAnswer);
+    const usersWithCorrectAnswer = this.getUsersForOption(correctOption);
+
+    console.log(
+      `Found ${usersWithCorrectAnswer.length} users with correct answer:`,
+      usersWithCorrectAnswer
+    );
+
+    // Award points to each user with correct answer
+    usersWithCorrectAnswer.forEach((user) => {
+      // Find the socket ID for this user from the submitted answers
+      const userAnswer = this.currentQuestionAnswers.find(
+        (answer) => answer.username === user.username
+      );
+
+      if (userAnswer) {
+        // Get the socket ID from the lobby service
+        const lobby = this.lobbyService.getCurrentLobby();
+        let userSocketId: string | undefined;
+
+        if (lobby) {
+          // Check if it's the moderator
+          if (lobby.moderator.username === user.username) {
+            userSocketId = lobby.moderator.socketId;
+          } else {
+            // Check regular users
+            const lobbyUser = lobby.users?.find(
+              (u) => u.username === user.username
+            );
+            if (lobbyUser) {
+              userSocketId = lobbyUser.socketId;
+            }
+          }
+
+          if (userSocketId) {
+            console.log(
+              `Awarding point to user ${user.username} with socket ID ${userSocketId}`
+            );
+            this.lobbyService.addPoint(this.lobbyCode, userSocketId);
+          }
+        }
+      }
+    });
+
+    // Mark the round as completed
+    this.multipleChoiceRoundCompleted = true;
+
+    // Broadcast a message that the round is complete
+    // You could also add a more formal event through the socket, similar to buzzer rounds
+    this.lobbyService.sendMessage(
+      this.lobbyCode,
+      'Multiple Choice Runde beendet! Punkte wurden verteilt.'
+    );
+  }
+
+  /**
+   * Reset multiple choice round state when changing questions
+   */
+  resetMultipleChoiceRound(): void {
+    this.multipleChoiceRoundCompleted = false;
+  }
+
+  /**
+   * Judge an estimation answer - now handles toggling judgments
+   * @param answer The answer to judge
+   * @param isCorrect Whether the answer is correct
+   */
+  judgeEstimationAnswer(answer: SubmittedAnswer, isCorrect: boolean): void {
+    // Create a unique ID for this answer
+    const answerId = `${answer.username}-${answer.questionIndex}`;
+
+    // If this exact judgment already exists, remove it (toggle off)
+    if (this.estimationJudgments[answerId] === isCorrect) {
+      delete this.estimationJudgments[answerId];
+      console.log(`Removed judgment for ${answer.username}'s answer`);
+      return;
+    }
+
+    // Otherwise store/update the judgment
+    this.estimationJudgments[answerId] = isCorrect;
+    console.log(
+      `Judged ${answer.username}'s answer as ${
+        isCorrect ? 'correct' : 'incorrect'
+      }`
+    );
+  }
+
+  /**
+   * Complete the estimation round and award points to users with correct answers
+   */
+  completeEstimationRound(): void {
+    console.log('Completing estimation round');
+
+    if (this.estimationRoundCompleted) {
+      console.warn('Estimation round already completed');
+      return;
+    }
+
+    if (!this.currentQuestion || this.currentQuestion.type !== 'estimation') {
+      console.warn('Not an estimation question');
+      return;
+    }
+
+    // Show the answer to all participants
+    this.setAnswerVisibility(true);
+
+    // Get all users with correct judgments
+    let pointsAwarded = 0;
+
+    this.currentQuestionAnswers.forEach((answer) => {
+      const answerId = `${answer.username}-${answer.questionIndex}`;
+
+      // Check if this answer was judged correct
+      if (this.estimationJudgments[answerId] === true) {
+        // Find the user in the lobby
+        const lobby = this.lobbyService.getCurrentLobby();
+        if (!lobby) return;
+
+        let userSocketId: string | undefined;
+
+        // Check if it's the moderator
+        if (lobby.moderator.username === answer.username) {
+          userSocketId = lobby.moderator.socketId;
+        } else {
+          // Find user in the lobby's users list
+          const lobbyUser = lobby.users?.find(
+            (u) => u.username === answer.username
+          );
+          if (lobbyUser) {
+            userSocketId = lobbyUser.socketId;
+          }
+        }
+
+        // Award point if we found the user
+        if (userSocketId) {
+          console.log(
+            `Awarding point to user ${answer.username} for correct estimation`
+          );
+          this.lobbyService.addPoint(this.lobbyCode, userSocketId);
+          pointsAwarded++;
+        }
+      }
+    });
+
+    // Mark the round as completed
+    this.estimationRoundCompleted = true;
+
+    // Send message about round completion
+    this.lobbyService.sendMessage(
+      this.lobbyCode,
+      `Schätzrunde beendet! ${pointsAwarded} Punkte wurden verteilt.`
+    );
+  }
+
+  /**
+   * Check if any estimation answers have been judged
+   * @returns Whether any answer has been judged
+   */
+  hasEstimationJudgments(): boolean {
+    return Object.keys(this.estimationJudgments).length > 0;
+  }
+
+  /**
+   * Check if an estimation answer has been judged
+   * @param answer The answer to check
+   * @returns Whether the answer has been judged
+   */
+  isEstimationJudged(answer: SubmittedAnswer): boolean {
+    const answerId = `${answer.username}-${answer.questionIndex}`;
+    return answerId in this.estimationJudgments;
+  }
+
+  /**
+   * Check if an estimation answer was judged correct
+   * @param answer The answer to check
+   * @returns Whether the answer was judged correct
+   */
+  isEstimationCorrect(answer: SubmittedAnswer): boolean {
+    const answerId = `${answer.username}-${answer.questionIndex}`;
+    return this.estimationJudgments[answerId] === true;
+  }
+
+  /**
+   * Reset all estimation judgments when changing questions
+   */
+  private resetEstimationJudgments(): void {
+    this.estimationJudgments = {};
   }
 }

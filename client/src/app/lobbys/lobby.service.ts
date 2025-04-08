@@ -10,6 +10,8 @@ import {
   EventHistory,
   JoinLobbyResponse,
   UserListUpdate,
+  AnswerUpdate, // Add this import
+  SubmittedAnswer, // Add this import
 } from '../types';
 
 export interface GameState {
@@ -17,20 +19,6 @@ export interface GameState {
   currentQuestionIndex: number;
   isQuestionVisible: boolean;
   isAnswerVisible: boolean;
-}
-
-// Add these new interfaces
-export interface SubmittedAnswer {
-  username: string;
-  questionIndex: number;
-  answer: string;
-  type: 'multipleChoice' | 'estimation';
-  timestamp: number;
-}
-
-export interface AnswerUpdate {
-  lobbyCode: string;
-  answers: SubmittedAnswer[];
 }
 
 // New interfaces for buzzer judgment system
@@ -221,8 +209,15 @@ export class LobbyService {
         // Extract the answers and ensure we're dealing with a proper array
         const answers = Array.isArray(update.answers) ? update.answers : [];
 
+        // Get answers specific to current question if available
+        const currentQuestionAnswers = Array.isArray(
+          update.currentQuestionAnswers
+        )
+          ? update.currentQuestionAnswers
+          : answers.filter((a) => a.questionIndex === update.questionIndex);
+
         // Log each answer for debugging
-        answers.forEach((answer) => {
+        currentQuestionAnswers.forEach((answer) => {
           console.log(
             `Answer in service - username: ${answer.username}, question: ${answer.questionIndex}, value: ${answer.answer}`
           );
@@ -233,6 +228,19 @@ export class LobbyService {
 
         // Explicitly set the new value
         this.answersSubject.next(newAnswers);
+
+        // If we have a current game state, update the question index if needed
+        if (this.gameStateSubject.value && update.questionIndex !== undefined) {
+          if (
+            this.gameStateSubject.value.currentQuestionIndex !==
+            update.questionIndex
+          ) {
+            this.gameStateSubject.next({
+              ...this.gameStateSubject.value,
+              currentQuestionIndex: update.questionIndex,
+            });
+          }
+        }
 
         // Log the current value of the subject
         console.log(
@@ -671,4 +679,12 @@ export class LobbyService {
     // Match the server's buzzer:finalizeRound event
     this.socket.emit('buzzer:finalizeRound', lobbyCode, addPoints);
   }
+
+  /**
+   * Send a message to the lobby
+   */
+  sendMessage(lobbyCode: string, message: string): void {
+    this.socket.emit('message', message);
+  }
 }
+export type { SubmittedAnswer };
