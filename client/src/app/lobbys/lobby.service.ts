@@ -3,6 +3,7 @@ import { Subject, Observable, BehaviorSubject } from 'rxjs';
 import { Socket, io } from 'socket.io-client';
 import { Router } from '@angular/router';
 import { SocketService } from '../socket.service';
+import { HttpClient } from '@angular/common/http';
 import {
   Lobby,
   User,
@@ -590,7 +591,8 @@ export class LobbyService {
     isCorrect: boolean
   ): void {
     console.log(
-      `Completing buzzer round for ${username} with judgment: ${isCorrect ? 'correct' : 'incorrect'
+      `Completing buzzer round for ${username} with judgment: ${
+        isCorrect ? 'correct' : 'incorrect'
       }`
     );
 
@@ -690,7 +692,41 @@ export class LobbyService {
    * Upload an avatar to the backend
    */
   uploadAvatar(formData: FormData): Observable<any> {
-    return this.socketService.getHttpClient().post('/api/upload-avatar', formData);
+    // Get the server URL from SocketService instead of hardcoding it
+    const serverUrl = this.socketService.getServerUrl();
+    // Get JWT token from localStorage
+    const token = localStorage.getItem('jwt_token');
+
+    // Create headers with authorization if token exists
+    const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+
+    return this.socketService
+      .getHttpClient()
+      .post(`${serverUrl}/api/upload-avatar`, formData, { headers });
+  }
+
+  /**
+   * Get avatar for a specific username
+   */
+  getUserAvatar(username: string): Observable<any> {
+    const serverUrl = this.socketService.getServerUrl();
+    return this.socketService
+      .getHttpClient()
+      .get(`${serverUrl}/api/get-avatar/${username}`);
+  }
+
+  /**
+   * Preload an avatar image for smoother transitions
+   * @param url The URL of the avatar to preload
+   * @returns A promise that resolves when the image is loaded
+   */
+  preloadAvatar(url: string): Promise<Event> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.src = url;
+      img.onload = (event) => resolve(event);
+      img.onerror = (error) => reject(error);
+    });
   }
 }
 export type { SubmittedAnswer };

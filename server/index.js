@@ -1,4 +1,6 @@
-const app = require("express")();
+const express = require("express");
+const path = require("path");
+const app = express();
 const httpServer = require("http").createServer(app);
 const { get } = require("http");
 const jwt = require("jsonwebtoken");
@@ -6,8 +8,9 @@ const { send } = require("process");
 const io = require("socket.io")(httpServer, {
   cors: { origin: "*" },
 });
-const multer = require('multer');
-const upload = multer({ dest: 'uploads/' });
+const multer = require("multer");
+const upload = multer({ dest: "uploads/" });
+const cors = require("cors"); // Add CORS middleware import
 
 const port = 3000;
 var buzzerState = [];
@@ -15,10 +18,24 @@ var lobbyCodes = [];
 // username, lobbys + socketId array
 var users = [];
 
+// Add temporary storage for avatar URLs by username
+var tempAvatarUrls = {}; // Maps usernames to avatar URLs before user is fully registered
+
 // lobbycode, moderator, users[], isActive, currentBuzzerState, points, event history
 var lobbys = [];
 
 const SECRET_KEY = "your-secret-key";
+
+app.use(
+  cors({
+    origin: "*", // Allow all origins - adjust in production
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
+// Serve static files from the uploads directory
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Add this helper function outside the socket connection for token verification
 function verifyAndProcessToken(socket, token) {
@@ -88,13 +105,65 @@ io.use((socket, next) => {
   return next(); // Allow connection, but with unverified status
 });
 
-app.post('/api/upload-avatar', upload.single('avatar'), (req, res) => {
-  const file = req.file;
-  if (file) {
-    console.log('Avatar uploaded:', file.filename);
-    res.status(200).send({ message: 'Avatar uploaded successfully', filename: file.filename });
+app.get("/api/get-avatar/:username", (req, res) => {
+  // Add specific CORS headers for this route
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  console.log("get-avatar called");
+
+  const username = req.params.username;
+
+  // Find the user in our users array
+  const user = users.find((user) => user.username === username);
+  console.log("User found:", user, username);
+  console.log("users:", users);
+
+  if (user && user.avatarUrl) {
+    res.status(200).send({ avatarUrl: user.avatarUrl });
   } else {
-    res.status(400).send({ message: 'Avatar upload failed' });
+    // No avatar found for this user
+    res.status(404).send({ message: "No avatar found for this user" });
+  }
+});
+
+app.post("/api/upload-avatar", upload.single("avatar"), (req, res) => {
+  // Add specific CORS headers for this route
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "POST");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+  const file = req.file;
+  const username = req.body.username; // Assuming username is sent in the request
+
+  if (file && username) {
+    console.log("Avatar uploaded for user:", username, file.filename);
+
+    // Generate avatar URL
+    const avatarUrl = `${req.protocol}://${req.get("host")}/uploads/${
+      file.filename
+    }`;
+
+    // Store the avatar URL with the user
+    const userIndex = users.findIndex((user) => user.username === username);
+    if (userIndex !== -1) {
+      users[userIndex].avatarUrl = avatarUrl;
+      console.log(
+        `Updated avatar URL for existing user ${username}: ${avatarUrl}`
+      );
+    } else {
+      // Store in temporary mapping if user doesn't exist yet
+      tempAvatarUrls[username] = avatarUrl;
+      console.log(`Stored temporary avatar URL for ${username}: ${avatarUrl}`);
+    }
+
+    res.status(200).send({
+      message: "Avatar uploaded successfully",
+      filename: file.filename,
+      avatarUrl: avatarUrl,
+    });
+  } else {
+    res.status(400).send({ message: "Avatar upload failed" });
   }
 });
 
@@ -217,7 +286,8 @@ io.on("connection", (socket) => {
   // Add new events for buzzer answer evaluation
   socket.on("buzzer:evaluate", (lobbyCode, isCorrect) => {
     console.log(
-      `buzzer:evaluate - Answer marked as ${isCorrect ? "correct" : "incorrect"
+      `buzzer:evaluate - Answer marked as ${
+        isCorrect ? "correct" : "incorrect"
       }`
     );
     const foundUser = findUserBySocketId(socket.id);
@@ -1091,15 +1161,28 @@ io.on("connection", (socket) => {
         }
       }
       users[userIndex].username = username;
+      // Make sure avatarUrl exists even if it didn't before
+      users[userIndex].avatarUrl = users[userIndex].avatarUrl || "";
     } else {
-      // Add new user
+      // Check if there's a cached avatar URL for this new user
+      const cachedAvatarUrl = tempAvatarUrls[username] || "";
+
+      // Add new user with cached avatar URL if available
       users.push({
         username: username,
         lobbys: userLobbies,
+        avatarUrl: cachedAvatarUrl, // Use cached avatar URL if available
       });
-      console.log(
-        `Added new user ${username} with socket ${socket.id} for lobby ${lobbyCode}`
-      );
+
+      if (cachedAvatarUrl) {
+        console.log(
+          `Using cached avatar URL for new user ${username}: ${cachedAvatarUrl}`
+        );
+        // Clean up the temporary storage since we've used it
+        delete tempAvatarUrls[username];
+      } else {
+        console.log(`Added new user ${username} with empty avatar`);
+      }
     }
 
     // Debug output to see the full users array
@@ -1245,10 +1328,10 @@ io.on("connection", (socket) => {
         evaluation:
           action === "buzzer:pressed"
             ? {
-              isCorrect: null,
-              evaluatedAt: null,
-              finalized: false,
-            }
+                isCorrect: null,
+                evaluatedAt: null,
+                finalized: false,
+              }
             : null,
       };
 
@@ -1279,8 +1362,8 @@ io.on("connection", (socket) => {
           ? userInLobby.username
           : lobbyWithUser.moderator &&
             lobbyWithUser.moderator.socketId === socket.id
-            ? lobbyWithUser.moderator.username
-            : "Unknown User";
+          ? lobbyWithUser.moderator.username
+          : "Unknown User";
 
         console.log(
           `User found in lobby but not in users array. Username: ${username}, fixing...`
@@ -1304,10 +1387,10 @@ io.on("connection", (socket) => {
           evaluation:
             action === "buzzer:pressed"
               ? {
-                isCorrect: null,
-                evaluatedAt: null,
-                finalized: false,
-              }
+                  isCorrect: null,
+                  evaluatedAt: null,
+                  finalized: false,
+                }
               : null,
         };
 

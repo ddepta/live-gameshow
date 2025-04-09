@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Socket, io } from 'socket.io-client';
+import { BehaviorSubject, Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -11,6 +12,8 @@ export class SocketService {
   // private serverUrl = 'https://live-gameshow.onrender.com'; // Replace with your server URL
 
   private serverUrl = 'http://localhost:3000'; // Replace with your server URL
+  private connectionStatusSubject = new BehaviorSubject<boolean>(false);
+
   constructor(httpClient: HttpClient) {
     if (!SocketService.socket) {
       this.initializeSocket();
@@ -42,11 +45,22 @@ export class SocketService {
     // Log connection events for debugging
     SocketService.socket.on('connect', () => {
       console.log('Socket connected successfully');
+      this.connectionStatusSubject.next(true);
+    });
+
+    SocketService.socket.on('disconnect', () => {
+      console.log('Socket disconnected');
+      this.connectionStatusSubject.next(false);
     });
 
     SocketService.socket.on('connect_error', (error) => {
       console.error('Socket connection error:', error);
+      this.connectionStatusSubject.next(false);
     });
+  }
+
+  getServerUrl(): string {
+    return this.serverUrl;
   }
 
   getSocket(): Socket {
@@ -55,6 +69,16 @@ export class SocketService {
 
   getHttpClient(): HttpClient {
     return SocketService.httpClient;
+  }
+
+  // Returns an observable that emits true when connected, false when disconnected
+  getConnectionStatus(): Observable<boolean> {
+    return this.connectionStatusSubject.asObservable();
+  }
+
+  // Method to check if socket is currently connected
+  isConnected(): boolean {
+    return SocketService.socket?.connected || false;
   }
 
   // Method to update token when it changes
