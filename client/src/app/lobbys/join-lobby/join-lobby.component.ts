@@ -8,19 +8,20 @@ import { InputTextModule } from 'primeng/inputtext';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { typPlus, typPlusOutline } from '@ng-icons/typicons';
 import { gameRetroController } from '@ng-icons/game-icons';
+import { HttpClientModule } from '@angular/common/http';
 
 @Component({
   selector: 'app-join-lobby',
   templateUrl: './join-lobby.component.html',
   styleUrls: ['./join-lobby.component.scss'],
-  imports: [FormsModule, ButtonModule, CardModule, InputTextModule, NgIcon],
+  imports: [FormsModule, ButtonModule, CardModule, InputTextModule, NgIcon, HttpClientModule],
   providers: [provideIcons({ typPlus, typPlusOutline, gameRetroController })],
 })
 export class JoinLobbyComponent implements OnInit {
   lobbyCode!: string;
   username!: string;
 
-  constructor(private lobbyService: LobbyService, private router: Router) {}
+  constructor(private lobbyService: LobbyService, private router: Router) { }
 
   ngOnInit() {
     this.username = localStorage.getItem('username') || '';
@@ -49,5 +50,16 @@ export class JoinLobbyComponent implements OnInit {
         this.router.navigate(['/lobby', result.lobbyCode]);
       }
     });
+  }
+
+  onAvatarSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      const formData = new FormData();
+      formData.append('avatar', file);
+      this.lobbyService.uploadAvatar(formData).subscribe((response) => {
+        console.log('Avatar uploaded successfully:', response);
+      });
+    }
   }
 }

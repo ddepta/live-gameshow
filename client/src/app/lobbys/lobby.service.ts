@@ -590,8 +590,7 @@ export class LobbyService {
     isCorrect: boolean
   ): void {
     console.log(
-      `Completing buzzer round for ${username} with judgment: ${
-        isCorrect ? 'correct' : 'incorrect'
+      `Completing buzzer round for ${username} with judgment: ${isCorrect ? 'correct' : 'incorrect'
       }`
     );
 
@@ -685,6 +684,13 @@ export class LobbyService {
    */
   sendMessage(lobbyCode: string, message: string): void {
     this.socket.emit('message', message);
+  }
+
+  /**
+   * Upload an avatar to the backend
+   */
+  uploadAvatar(formData: FormData): Observable<any> {
+    return this.socketService.getHttpClient().post('/api/upload-avatar', formData);
   }
 }
 export type { SubmittedAnswer };

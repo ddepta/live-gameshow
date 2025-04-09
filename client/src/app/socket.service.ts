@@ -1,3 +1,4 @@
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Socket, io } from 'socket.io-client';
 
@@ -6,12 +7,16 @@ import { Socket, io } from 'socket.io-client';
 })
 export class SocketService {
   private static socket: Socket;
-  // private serverUrl = 'http://localhost:3000';
-  private serverUrl = 'https://live-gameshow.onrender.com'; // Replace with your server URL
+  private static httpClient: HttpClient;
+  // private serverUrl = 'https://live-gameshow.onrender.com'; // Replace with your server URL
 
-  constructor() {
+  private serverUrl = 'http://localhost:3000'; // Replace with your server URL
+  constructor(httpClient: HttpClient) {
     if (!SocketService.socket) {
       this.initializeSocket();
+    }
+    if (!SocketService.httpClient) {
+      SocketService.httpClient = httpClient;
     }
   }
 
@@ -46,6 +51,10 @@ export class SocketService {
 
   getSocket(): Socket {
     return SocketService.socket;
+  }
+
+  getHttpClient(): HttpClient {
+    return SocketService.httpClient;
   }
 
   // Method to update token when it changes

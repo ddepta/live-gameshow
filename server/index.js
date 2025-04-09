@@ -6,6 +6,8 @@ const { send } = require("process");
 const io = require("socket.io")(httpServer, {
   cors: { origin: "*" },
 });
+const multer = require('multer');
+const upload = multer({ dest: 'uploads/' });
 
 const port = 3000;
 var buzzerState = [];
@@ -84,6 +86,16 @@ io.use((socket, next) => {
 
   console.error("No valid token provided or verification failed");
   return next(); // Allow connection, but with unverified status
+});
+
+app.post('/api/upload-avatar', upload.single('avatar'), (req, res) => {
+  const file = req.file;
+  if (file) {
+    console.log('Avatar uploaded:', file.filename);
+    res.status(200).send({ message: 'Avatar uploaded successfully', filename: file.filename });
+  } else {
+    res.status(400).send({ message: 'Avatar upload failed' });
+  }
 });
 
 io.on("connection", (socket) => {
@@ -205,8 +217,7 @@ io.on("connection", (socket) => {
   // Add new events for buzzer answer evaluation
   socket.on("buzzer:evaluate", (lobbyCode, isCorrect) => {
     console.log(
-      `buzzer:evaluate - Answer marked as ${
-        isCorrect ? "correct" : "incorrect"
+      `buzzer:evaluate - Answer marked as ${isCorrect ? "correct" : "incorrect"
       }`
     );
     const foundUser = findUserBySocketId(socket.id);
@@ -1234,10 +1245,10 @@ io.on("connection", (socket) => {
         evaluation:
           action === "buzzer:pressed"
             ? {
-                isCorrect: null,
-                evaluatedAt: null,
-                finalized: false,
-              }
+              isCorrect: null,
+              evaluatedAt: null,
+              finalized: false,
+            }
             : null,
       };
 
@@ -1268,8 +1279,8 @@ io.on("connection", (socket) => {
           ? userInLobby.username
           : lobbyWithUser.moderator &&
             lobbyWithUser.moderator.socketId === socket.id
-          ? lobbyWithUser.moderator.username
-          : "Unknown User";
+            ? lobbyWithUser.moderator.username
+            : "Unknown User";
 
         console.log(
           `User found in lobby but not in users array. Username: ${username}, fixing...`
@@ -1293,10 +1304,10 @@ io.on("connection", (socket) => {
           evaluation:
             action === "buzzer:pressed"
               ? {
-                  isCorrect: null,
-                  evaluatedAt: null,
-                  finalized: false,
-                }
+                isCorrect: null,
+                evaluatedAt: null,
+                finalized: false,
+              }
               : null,
         };
 

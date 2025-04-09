@@ -14,47 +14,27 @@
       <div class="plus-container">
         <ng-icon name="gameRetroController" class="plus" />
       </div>
-      <p-button
-        label="LOBBY ERSTELLEN"
-        variant="outlined"
-        class="full-width"
-      ></p-button>
+      <p-button label="LOBBY ERSTELLEN" variant="outlined" class="full-width"></p-button>
     </div>
 
     <div class="animated-card">
       <span>UPLOAD AVATAR</span>
+      <input type="file" (change)="onAvatarSelected($event)" accept="image/*" />
     </div>
 
     <div class="side-button right">
       <div class="lobby-code-container">
         <label for="lobbyCode">LOBBYCODE</label>
-        <input
-          id="lobbyCode"
-          [(ngModel)]="lobbyCode"
-          placeholder="ABCDE"
-          pInputText
-          class="lobby-code-input"
-        />
+        <input id="lobbyCode" [(ngModel)]="lobbyCode" placeholder="ABCDE" pInputText class="lobby-code-input" />
       </div>
-      <p-button
-        label="LOBBY BETRETEN"
-        (click)="joinLobby()"
-        variant="outlined"
-        class="full-width"
-      ></p-button>
+      <p-button label="LOBBY BETRETEN" (click)="joinLobby()" variant="outlined" class="full-width"></p-button>
     </div>
   </div>
 
   <div class="username-container">
     <div class="field">
       <label for="username">USERNAME</label>
-      <input
-        id="username"
-        [(ngModel)]="username"
-        placeholder="Enter your username"
-        required="true"
-        pInputText
-      />
+      <input id="username" [(ngModel)]="username" placeholder="Enter your username" required="true" pInputText />
     </div>
   </div>
 </div>

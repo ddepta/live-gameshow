@@ -6,9 +6,11 @@ import Aura from '@primeng/themes/aura';
 
 import { routes } from './app-routing.module';
 import MyPreset from './mytheme';
+import { provideHttpClient } from '@angular/common/http';
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    provideHttpClient(),
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes, withViewTransitions()),
     provideAnimationsAsync(),
