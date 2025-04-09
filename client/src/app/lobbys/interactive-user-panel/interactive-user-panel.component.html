@@ -5,6 +5,20 @@
     <div class="users-list">
       <!-- Moderator -->
       <div class="user-item moderator" *ngIf="displayedModerator">
+        <!-- Avatar for moderator -->
+        <div class="user-avatar">
+          <img
+            *ngIf="getAvatarUrl(displayedModerator)"
+            [src]="getAvatarUrl(displayedModerator)"
+            alt="Avatar"
+          />
+          <span
+            *ngIf="!getAvatarUrl(displayedModerator)"
+            class="avatar-initial"
+            >{{ getInitial(displayedModerator.username) }}</span
+          >
+        </div>
+
         <ng-icon
           name="gameHammerDrop"
           size="20px"
@@ -28,6 +42,18 @@
       <!-- Other users -->
       <ng-container *ngFor="let user of displayedUsers; let last = last">
         <div class="user-item" id="user-{{ user.socketId }}">
+          <!-- Avatar for user -->
+          <div class="user-avatar">
+            <img
+              *ngIf="getAvatarUrl(user)"
+              [src]="getAvatarUrl(user)"
+              alt="Avatar"
+            />
+            <span *ngIf="!getAvatarUrl(user)" class="avatar-initial">{{
+              getInitial(user.username)
+            }}</span>
+          </div>
+
           <!-- Kick Icon -->
           <ng-icon
             *ngIf="isModerator"
