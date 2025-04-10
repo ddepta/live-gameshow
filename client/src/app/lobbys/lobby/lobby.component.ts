@@ -85,12 +85,21 @@ export class LobbyComponent implements OnInit, OnDestroy {
         // console.log('lobby result:', result);
         // Handle error case when lobby doesn't exist
         if (result.error || !result || Object.keys(result).length === 0) {
-          // console.error(
-          //   'Lobby not found or error:',
-          //   result.error || 'Empty response'
-          // );
-          // Redirect to home page
-          this.router.navigate(['/']);
+          console.error(
+            'Lobby not found or error:',
+            result.error || 'Empty response'
+          );
+
+          // Check if it's an authentication error
+          if (result.error === 'Authentication required') {
+            // Redirect to home page with lobby code as query parameter
+            this.router.navigate(['/'], {
+              queryParams: { lobbyCode: this.lobbyCode },
+            });
+          } else {
+            // For other errors, just redirect to home page
+            this.router.navigate(['/']);
+          }
           return;
         }
 

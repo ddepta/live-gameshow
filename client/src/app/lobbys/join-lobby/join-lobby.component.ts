@@ -5,7 +5,7 @@ import {
   ViewChild,
   ElementRef,
 } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { LobbyService } from '../lobby.service';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -60,11 +60,19 @@ export class JoinLobbyComponent implements OnInit, OnDestroy {
   constructor(
     private lobbyService: LobbyService,
     private router: Router,
-    private socketService: SocketService
+    private socketService: SocketService,
+    private route: ActivatedRoute // Add ActivatedRoute
   ) {}
 
   ngOnInit() {
     this.username = localStorage.getItem('username') || '';
+
+    // Check for lobbyCode in query parameters
+    this.route.queryParams.subscribe((params) => {
+      if (params['lobbyCode']) {
+        this.lobbyCode = params['lobbyCode'];
+      }
+    });
 
     // If we have a username, try to load the avatar after connection
     if (this.username) {
