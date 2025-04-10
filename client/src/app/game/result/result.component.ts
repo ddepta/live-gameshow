@@ -35,7 +35,7 @@ export class ResultComponent implements OnInit, OnDestroy, OnChanges {
     // Subscribe to point updates
     this.subscriptions.push(
       this.lobbyService.onPointUpdated().subscribe((updatedUser) => {
-        console.log('Point update received in results component:', updatedUser);
+        // console.log('Point update received in results component:', updatedUser);
         this.updateUserInResults(updatedUser);
       })
     );
@@ -43,7 +43,7 @@ export class ResultComponent implements OnInit, OnDestroy, OnChanges {
     // Subscribe to point reset events
     this.subscriptions.push(
       this.lobbyService.onAllPointsReset().subscribe((users) => {
-        console.log('All points reset in results component');
+        // console.log('All points reset in results component');
         this.loadResultsData(); // Reload all data when points are reset
       })
     );
@@ -52,7 +52,7 @@ export class ResultComponent implements OnInit, OnDestroy, OnChanges {
     this.subscriptions.push(
       this.lobbyService.getLobbyUpdates().subscribe((lobbyCode) => {
         if (lobbyCode === this.lobbyCode) {
-          console.log('Lobby updated, refreshing results data');
+          // console.log('Lobby updated, refreshing results data');
           this.loadResultsData();
         }
       })
@@ -62,7 +62,7 @@ export class ResultComponent implements OnInit, OnDestroy, OnChanges {
   // Add OnChanges lifecycle hook to respond to input changes
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['lobbyCode'] && !changes['lobbyCode'].firstChange) {
-      console.log('Lobby code changed, reloading results data');
+      // console.log('Lobby code changed, reloading results data');
       this.loadResultsData();
     }
   }
@@ -78,7 +78,7 @@ export class ResultComponent implements OnInit, OnDestroy, OnChanges {
   private loadResultsData(): void {
     const lobby = this.lobbyService.getCurrentLobby();
     if (lobby) {
-      console.log('Loading results data for lobby:', lobby.lobbyCode);
+      // console.log('Loading results data for lobby:', lobby.lobbyCode);
 
       // Get all users with their points
       this.users = lobby.users || [];
@@ -102,9 +102,9 @@ export class ResultComponent implements OnInit, OnDestroy, OnChanges {
       // Sort by points (highest first)
       this.sortResults();
 
-      console.log('Results data loaded:', this.sortedResults);
+      // console.log('Results data loaded:', this.sortedResults);
     } else {
-      console.warn('No lobby data available');
+      // console.warn('No lobby data available');
       this.sortedResults = [];
     }
   }
@@ -115,9 +115,9 @@ export class ResultComponent implements OnInit, OnDestroy, OnChanges {
   private updateUserInResults(updatedUser: User): void {
     // Skip if this is the moderator
     if (this.moderator && this.moderator.username === updatedUser.username) {
-      console.log(
-        `Skipping moderator ${updatedUser.username} in results update`
-      );
+      // console.log(
+      //   `Skipping moderator ${updatedUser.username} in results update`
+      // );
       return;
     }
 
@@ -129,9 +129,9 @@ export class ResultComponent implements OnInit, OnDestroy, OnChanges {
     if (userIndex !== -1) {
       // Update points for the existing user
       this.sortedResults[userIndex].points = updatedUser.points || 0;
-      console.log(
-        `Updated points for ${updatedUser.username} to ${updatedUser.points}`
-      );
+      // console.log(
+      //   `Updated points for ${updatedUser.username} to ${updatedUser.points}`
+      // );
     } else {
       // Only add if not moderator
       if (!this.moderator || this.moderator.username !== updatedUser.username) {
@@ -140,9 +140,9 @@ export class ResultComponent implements OnInit, OnDestroy, OnChanges {
           points: updatedUser.points || 0,
           isModerator: false, // Never mark as moderator
         });
-        console.log(
-          `Added new user ${updatedUser.username} with ${updatedUser.points} points`
-        );
+        // console.log(
+        //   `Added new user ${updatedUser.username} with ${updatedUser.points} points`
+        // );
       }
     }
 

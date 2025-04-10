@@ -37,9 +37,9 @@ export class MessageService implements OnDestroy {
 
   private setupMessageListener() {
     if (!this.isListening) {
-      console.log('Setting up message listener');
+      // console.log('Setting up message listener');
       this.socket.on('message', (message: any) => {
-        console.log('Received message:', message);
+        // console.log('Received message:', message);
 
         // Handle both new object format and legacy string format
         if (typeof message === 'object' && message !== null) {
@@ -67,14 +67,14 @@ export class MessageService implements OnDestroy {
 
   private cleanupMessageListener() {
     if (this.isListening) {
-      console.log('Removing message listener');
+      // console.log('Removing message listener');
       this.socket.off('message');
       this.isListening = false;
     }
   }
 
   public sendMessage(message: string) {
-    console.log('Sending message:', message);
+    // console.log('Sending message:', message);
     this.socket.emit('message', message);
   }
 

@@ -78,17 +78,17 @@ export class LobbyComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    console.log('lobby init');
+    // console.log('lobby init');
     this.route.params.subscribe((params: Params) => {
       this.lobbyCode = params['lobbyCode'];
       this.lobbyService.getLobby(this.lobbyCode).subscribe((result: any) => {
-        console.log('lobby result:', result);
+        // console.log('lobby result:', result);
         // Handle error case when lobby doesn't exist
         if (result.error || !result || Object.keys(result).length === 0) {
-          console.error(
-            'Lobby not found or error:',
-            result.error || 'Empty response'
-          );
+          // console.error(
+          //   'Lobby not found or error:',
+          //   result.error || 'Empty response'
+          // );
           // Redirect to home page
           this.router.navigate(['/']);
           return;
@@ -97,11 +97,11 @@ export class LobbyComponent implements OnInit, OnDestroy {
         // Valid lobby found
         this.lobby = result;
         this.eventHistory = result.eventHistory ?? [];
-        console.log('Lobby loaded:', result);
+        // console.log('Lobby loaded:', result);
 
         // Check for active game state and update UI accordingly
         if (result.gameState && result.gameState.isGameActive) {
-          console.log('Game is active, showing game interface');
+          // console.log('Game is active, showing game interface');
           // Load the game data
           this.gameData = this.gameService.getGameData();
 
@@ -123,7 +123,7 @@ export class LobbyComponent implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.lobbyService.onGameStarted().subscribe(() => {
         if (!this.isGameStarted) {
-          console.log('Game started by moderator');
+          // console.log('Game started by moderator');
           // Only get game data if not already in game
           this.gameData = this.gameService.getGameData();
           this.isGameStarted = true;
@@ -138,14 +138,14 @@ export class LobbyComponent implements OnInit, OnDestroy {
 
     this.subscriptions.push(
       this.lobbyService.onQuestionChanged().subscribe((questionIndex) => {
-        console.log('Question changed to:', questionIndex);
+        // console.log('Question changed to:', questionIndex);
         this.currentQuestionIndex = questionIndex;
       })
     );
 
     this.subscriptions.push(
       this.lobbyService.onGameEnded().subscribe(() => {
-        console.log('Game ended by moderator - flipping back to lobby view');
+        // console.log('Game ended by moderator - flipping back to lobby view');
         this.isGameStarted = false;
         this.isGameEnded = true; // Set flag when game ends
       })
@@ -157,7 +157,7 @@ export class LobbyComponent implements OnInit, OnDestroy {
     // Subscribe to demo questions loaded events
     this.subscriptions.push(
       this.lobbyService.onDemoQuestionsLoaded().subscribe(() => {
-        console.log('Demo questions loaded event received in component');
+        // console.log('Demo questions loaded event received in component');
         this.isDemoQuestionsLoaded = true;
         this.gameService.toggleDemoQuestions(true);
       })
@@ -183,7 +183,7 @@ export class LobbyComponent implements OnInit, OnDestroy {
       // Notify other users that game has started
       this.lobbyService.startGame(this.lobbyCode);
     } else {
-      console.log('Only the moderator can start the game.');
+      // console.log('Only the moderator can start the game.');
     }
   }
 
@@ -191,7 +191,7 @@ export class LobbyComponent implements OnInit, OnDestroy {
     this.currentQuestionIndex = index;
 
     // If moderator changes question, broadcast to other users
-    if (this.lobby.isModerator) {
+    if (this.lobby?.isModerator) {
       this.lobbyService.changeQuestion(this.lobbyCode, index);
     }
   }
@@ -224,7 +224,7 @@ export class LobbyComponent implements OnInit, OnDestroy {
     const file: File = event.target.files[0];
     if (file) {
       // Currently doing nothing with the file as per requirements
-      console.log('File selected:', file.name);
+      // console.log('File selected:', file.name);
 
       // Reset the input so the same file can be selected again
       this.fileInput.nativeElement.value = '';

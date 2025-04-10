@@ -77,7 +77,7 @@ export class JoinLobbyComponent implements OnInit, OnDestroy {
           // Only take the first true value
           take(1),
           tap(() => {
-            console.log('Socket connected, loading avatar asynchronously');
+            // console.log('Socket connected, loading avatar asynchronously');
             this.loadUserAvatar();
           })
         )
@@ -114,7 +114,7 @@ export class JoinLobbyComponent implements OnInit, OnDestroy {
     this.lobbyService
       .preloadAvatar(url)
       .then(() => {
-        console.log('Avatar preloaded successfully:', url);
+        // console.log('Avatar preloaded successfully:', url);
         // Only set the avatar URL after it's fully loaded
         this.avatarUrl = this.pendingAvatarUrl;
         this.isAvatarLoaded = true;
@@ -122,7 +122,7 @@ export class JoinLobbyComponent implements OnInit, OnDestroy {
         this.pendingAvatarUrl = null;
       })
       .catch((error) => {
-        console.error('Failed to preload avatar:', error);
+        // console.error('Failed to preload avatar:', error);
         this.isAvatarLoading = false;
         this.pendingAvatarUrl = null;
       });
@@ -139,7 +139,7 @@ export class JoinLobbyComponent implements OnInit, OnDestroy {
     this.lobbyService.getUserAvatar(this.username).subscribe({
       next: (response) => {
         if (response && response.avatarUrl) {
-          console.log('Avatar URL received:', response.avatarUrl);
+          // console.log('Avatar URL received:', response.avatarUrl);
           // Preload the image instead of setting it directly
           this.preloadAvatar(response.avatarUrl);
         } else {
@@ -147,12 +147,12 @@ export class JoinLobbyComponent implements OnInit, OnDestroy {
         }
       },
       error: (error) => {
-        console.error('Error loading avatar:', error);
+        // console.error('Error loading avatar:', error);
         this.isAvatarLoading = false;
 
         // Retry if needed
         if (this.avatarLoadAttempts < this.maxAttempts) {
-          console.log(`Retrying avatar load automatically`);
+          // console.log(`Retrying avatar load automatically`);
           this.loadUserAvatar();
         }
       },
@@ -162,7 +162,7 @@ export class JoinLobbyComponent implements OnInit, OnDestroy {
   joinLobby() {
     // Validate both inputs
     let isValid = true;
-    console.log('joinlobby');
+    // console.log('joinlobby');
 
     // Check username
     if (!this.username || this.username.trim() === '') {
@@ -181,9 +181,9 @@ export class JoinLobbyComponent implements OnInit, OnDestroy {
       this.lobbyService
         .joinLobby(this.username, this.lobbyCode)
         .subscribe((result: any) => {
-          console.log('join lobby result: ', result);
+          // console.log('join lobby result: ', result);
           if (!result.error) {
-            console.log('no error: ', result);
+            // console.log('no error: ', result);
             localStorage.setItem('jwt_token', result.token);
             localStorage.setItem('username', result.username);
             this.router.navigate(['/lobby', result.lobbyCode]);
@@ -217,7 +217,7 @@ export class JoinLobbyComponent implements OnInit, OnDestroy {
     }
 
     this.lobbyService.joinLobby(this.username).subscribe((result: any) => {
-      console.log('createlobby result: ', result);
+      // console.log('createlobby result: ', result);
       if (!result.error) {
         localStorage.setItem('jwt_token', result.token);
         localStorage.setItem('username', result.username);
@@ -228,7 +228,7 @@ export class JoinLobbyComponent implements OnInit, OnDestroy {
 
   onAvatarSelected(event: any) {
     const file = event.target.files[0];
-    console.log('Selected file:', file);
+    // console.log('Selected file:', file);
     if (file) {
       // Show loading state
       this.isAvatarLoading = true;
@@ -245,7 +245,7 @@ export class JoinLobbyComponent implements OnInit, OnDestroy {
 
       this.lobbyService.uploadAvatar(formData).subscribe({
         next: (response) => {
-          console.log('Avatar uploaded successfully:', response);
+          // console.log('Avatar uploaded successfully:', response);
           if (response && response.avatarUrl) {
             // If server URL is different, preload again with the server URL
             if (response.avatarUrl !== this.avatarUrl) {
@@ -260,7 +260,7 @@ export class JoinLobbyComponent implements OnInit, OnDestroy {
           }
         },
         error: (error) => {
-          console.error('Error uploading avatar:', error);
+          // console.error('Error uploading avatar:', error);
           this.isAvatarLoading = false;
         },
       });

@@ -129,16 +129,16 @@ export class GameComponent implements OnInit, OnDestroy {
 
     // Check game state for initial question index with improved logging
     this.lobbyService.getGameState(this.lobbyCode).subscribe((gameState) => {
-      console.log('Received game state in component:', gameState);
+      // console.log('Received game state in component:', gameState);
       if (gameState) {
         this.currentQuestionIndex = gameState.currentQuestionIndex;
 
-        console.log('Setting visibility flags:', {
-          wasQuestionVisible: this.isQuestionVisibleToParticipants,
-          nowQuestionVisible: gameState.isQuestionVisible,
-          wasAnswerVisible: this.isAnswerVisibleToParticipants,
-          nowAnswerVisible: gameState.isAnswerVisible,
-        });
+        // console.log('Setting visibility flags:', {
+        //   wasQuestionVisible: this.isQuestionVisibleToParticipants,
+        //   nowQuestionVisible: gameState.isQuestionVisible,
+        //   wasAnswerVisible: this.isAnswerVisibleToParticipants,
+        //   nowAnswerVisible: gameState.isAnswerVisible,
+        // });
 
         this.isQuestionVisibleToParticipants = gameState.isQuestionVisible;
         this.isAnswerVisibleToParticipants = gameState.isAnswerVisible;
@@ -146,10 +146,10 @@ export class GameComponent implements OnInit, OnDestroy {
         this.answerSentToParticipants = gameState.isAnswerVisible;
         this.setCurrentQuestion(gameState.currentQuestionIndex);
 
-        console.log('Updated visibility state:', {
-          isQuestionVisibleToParticipants: this.isQuestionVisibleToParticipants,
-          isAnswerVisibleToParticipants: this.isAnswerVisibleToParticipants,
-        });
+        // console.log('Updated visibility state:', {
+        //   isQuestionVisibleToParticipants: this.isQuestionVisibleToParticipants,
+        //   isAnswerVisibleToParticipants: this.isAnswerVisibleToParticipants,
+        // });
       }
     });
 
@@ -221,7 +221,7 @@ export class GameComponent implements OnInit, OnDestroy {
     // Subscribe to submitted answers
     this.subscriptions.push(
       this.lobbyService.getAnswers().subscribe((answers) => {
-        console.log('Received answers in component:', answers);
+        // console.log('Received answers in component:', answers);
         this.submittedAnswers = answers;
         this.updateCurrentQuestionAnswers();
       })
@@ -230,7 +230,7 @@ export class GameComponent implements OnInit, OnDestroy {
     // Add subscription for active buzzer user
     this.subscriptions.push(
       this.lobbyService.getActiveBuzzerUser().subscribe((user) => {
-        console.log('Active buzzer user changed:', user);
+        // console.log('Active buzzer user changed:', user);
         this.activeBuzzerUser = user;
       })
     );
@@ -238,7 +238,7 @@ export class GameComponent implements OnInit, OnDestroy {
     // Subscribe to buzzer judgments
     this.subscriptions.push(
       this.lobbyService.onBuzzerJudgment().subscribe((judgment) => {
-        console.log('Received buzzer judgment:', judgment);
+        // console.log('Received buzzer judgment:', judgment);
         this.lastJudgment = judgment;
       })
     );
@@ -246,7 +246,7 @@ export class GameComponent implements OnInit, OnDestroy {
     // Subscribe to buzzer round completions
     this.subscriptions.push(
       this.lobbyService.onBuzzerRoundCompleted().subscribe((result) => {
-        console.log('Buzzer round completed:', result);
+        // console.log('Buzzer round completed:', result);
         this.lastRoundResult = result;
       })
     );
@@ -288,10 +288,10 @@ export class GameComponent implements OnInit, OnDestroy {
       (answer) => answer.questionIndex === this.currentQuestionIndex
     );
 
-    console.log(
-      'Filtered answers for current question:',
-      this.currentQuestionAnswers
-    );
+    // console.log(
+    //   'Filtered answers for current question:',
+    //   this.currentQuestionAnswers
+    // );
 
     // Check if current user already submitted an answer
     if (!this.isModerator) {
@@ -423,13 +423,13 @@ export class GameComponent implements OnInit, OnDestroy {
 
   // Question & answer visibility control for moderator
   setQuestionVisibility(visible: boolean): void {
-    console.log(`Setting question visibility to ${visible} for participants`);
+    // console.log(`Setting question visibility to ${visible} for participants`);
     this.questionSentToParticipants = visible;
     this.lobbyService.toggleQuestionVisibility(this.lobbyCode, visible);
   }
 
   setAnswerVisibility(visible: boolean): void {
-    console.log(`Setting answer visibility to ${visible} for participants`);
+    // console.log(`Setting answer visibility to ${visible} for participants`);
     // Automatically remove blur when moderator makes question visible
     if (visible && this.isModerator) {
       this.isAnswerBlurred = false;
@@ -452,7 +452,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   confirmMultipleChoice(): void {
     if (this.selectedAnswer && !this.multipleChoiceSubmitted) {
-      console.log('Submitting multiple choice answer:', this.selectedAnswer);
+      // console.log('Submitting multiple choice answer:', this.selectedAnswer);
 
       // Validate state with server before submission
       this.validateVisibilityState();
@@ -476,12 +476,12 @@ export class GameComponent implements OnInit, OnDestroy {
   submitEstimation(value: string): void {
     // Only proceed if NOT a moderator and value is provided
     if (!this.isModerator && value && !this.estimationSubmitted) {
-      console.log('Submitting estimation:', value);
-      console.log('Current visibility state before submit:', {
-        isQuestionVisibleToParticipants: this.isQuestionVisibleToParticipants,
-        questionSentToParticipants: this.questionSentToParticipants,
-        isAnswerVisibleToParticipants: this.isAnswerVisibleToParticipants,
-      });
+      // console.log('Submitting estimation:', value);
+      // console.log('Current visibility state before submit:', {
+      //   isQuestionVisibleToParticipants: this.isQuestionVisibleToParticipants,
+      //   questionSentToParticipants: this.questionSentToParticipants,
+      //   isAnswerVisibleToParticipants: this.isAnswerVisibleToParticipants,
+      // });
 
       // Validate state with server before submission
       this.validateVisibilityState();
@@ -497,11 +497,11 @@ export class GameComponent implements OnInit, OnDestroy {
       // Ensure visibility state remains consistent after submission
       setTimeout(() => {
         this.validateVisibilityState();
-        console.log('Visibility state after submit:', {
-          isQuestionVisibleToParticipants: this.isQuestionVisibleToParticipants,
-          questionSentToParticipants: this.questionSentToParticipants,
-          isAnswerVisibleToParticipants: this.isAnswerVisibleToParticipants,
-        });
+        // console.log('Visibility state after submit:', {
+        //   isQuestionVisibleToParticipants: this.isQuestionVisibleToParticipants,
+        //   questionSentToParticipants: this.questionSentToParticipants,
+        //   isAnswerVisibleToParticipants: this.isAnswerVisibleToParticipants,
+        // });
       }, 500);
     }
   }
@@ -568,11 +568,11 @@ export class GameComponent implements OnInit, OnDestroy {
    */
   judgeBuzzerAnswer(isCorrect: boolean): void {
     if (!this.activeBuzzerUser) {
-      console.warn('No active buzzer user to judge');
+      // console.warn('No active buzzer user to judge');
       return;
     }
 
-    console.log(`Judging answer as ${isCorrect ? 'correct' : 'incorrect'}`);
+    // console.log(`Judging answer as ${isCorrect ? 'correct' : 'incorrect'}`);
 
     // Store judgment locally
     this.currentBuzzerJudgment = isCorrect;
@@ -590,15 +590,15 @@ export class GameComponent implements OnInit, OnDestroy {
    * Complete the buzzer round and award points if answer was judged correct
    */
   completeBuzzerRound(): void {
-    console.log('Finalizing buzzer round');
+    // console.log('Finalizing buzzer round');
 
     if (!this.activeBuzzerUser) {
-      console.warn('Cannot complete round: No active buzzer user');
+      // console.warn('Cannot complete round: No active buzzer user');
       return;
     }
 
     if (this.currentBuzzerJudgment === null) {
-      console.warn('Cannot complete round: No judgment made');
+      // console.warn('Cannot complete round: No judgment made');
       return;
     }
 
@@ -613,7 +613,7 @@ export class GameComponent implements OnInit, OnDestroy {
    * Reset all buzzers in the lobby and clear local judgment
    */
   resetBuzzers(): void {
-    console.log('Resetting buzzers');
+    // console.log('Resetting buzzers');
     this.lobbyService.resetBuzzers(this.lobbyCode);
     this.currentBuzzerJudgment = null;
   }
@@ -622,10 +622,10 @@ export class GameComponent implements OnInit, OnDestroy {
    * Complete the multiple choice round and award points to users with correct answers
    */
   completeMultipleChoiceRound(): void {
-    console.log('Completing multiple choice round');
+    // console.log('Completing multiple choice round');
 
     if (this.multipleChoiceRoundCompleted) {
-      console.warn('Round already completed');
+      // console.warn('Round already completed');
       return;
     }
 
@@ -633,7 +633,7 @@ export class GameComponent implements OnInit, OnDestroy {
       !this.currentQuestion ||
       this.currentQuestion.type !== 'multipleChoice'
     ) {
-      console.warn('Not a multiple choice question');
+      // console.warn('Not a multiple choice question');
       return;
     }
 
@@ -645,10 +645,10 @@ export class GameComponent implements OnInit, OnDestroy {
     const correctOption = String(this.currentQuestion.correctAnswer);
     const usersWithCorrectAnswer = this.getUsersForOption(correctOption);
 
-    console.log(
-      `Found ${usersWithCorrectAnswer.length} users with correct answer:`,
-      usersWithCorrectAnswer
-    );
+    // console.log(
+    //   `Found ${usersWithCorrectAnswer.length} users with correct answer:`,
+    //   usersWithCorrectAnswer
+    // );
 
     // Award points to each user with correct answer
     usersWithCorrectAnswer.forEach((user) => {
@@ -677,9 +677,9 @@ export class GameComponent implements OnInit, OnDestroy {
           }
 
           if (userSocketId) {
-            console.log(
-              `Awarding point to user ${user.username} with socket ID ${userSocketId}`
-            );
+            // console.log(
+            //   `Awarding point to user ${user.username} with socket ID ${userSocketId}`
+            // );
             this.lobbyService.addPoint(this.lobbyCode, userSocketId);
           }
         }
@@ -716,34 +716,24 @@ export class GameComponent implements OnInit, OnDestroy {
     // If this exact judgment already exists, remove it (toggle off)
     if (this.estimationJudgments[answerId] === isCorrect) {
       delete this.estimationJudgments[answerId];
-      console.log(`Removed judgment for ${answer.username}'s answer`);
+      // console.log(`Removed judgment for ${answer.username}'s answer`);
       return;
     }
 
     // Otherwise store/update the judgment
     this.estimationJudgments[answerId] = isCorrect;
-    console.log(
-      `Judged ${answer.username}'s answer as ${
-        isCorrect ? 'correct' : 'incorrect'
-      }`
-    );
+    // console.log(
+    //   `Judged ${answer.username}'s answer as ${
+    //     isCorrect ? 'correct' : 'incorrect'
+    //   }`
+    // );
   }
 
   /**
    * Complete the estimation round and award points to users with correct answers
    */
   completeEstimationRound(): void {
-    console.log('Completing estimation round');
-
-    if (this.estimationRoundCompleted) {
-      console.warn('Estimation round already completed');
-      return;
-    }
-
-    if (!this.currentQuestion || this.currentQuestion.type !== 'estimation') {
-      console.warn('Not an estimation question');
-      return;
-    }
+    // console.log('Completing estimation round');
 
     // Show the answer to all participants
     this.setAnswerVisibility(true);
@@ -777,9 +767,9 @@ export class GameComponent implements OnInit, OnDestroy {
 
         // Award point if we found the user
         if (userSocketId) {
-          console.log(
-            `Awarding point to user ${answer.username} for correct estimation`
-          );
+          // console.log(
+          //   `Awarding point to user ${answer.username} for correct estimation`
+          // );
           this.lobbyService.addPoint(this.lobbyCode, userSocketId);
           pointsAwarded++;
         }
@@ -842,10 +832,10 @@ export class GameComponent implements OnInit, OnDestroy {
       this.isAnswerVisibleToParticipants = currentState.isAnswerVisible;
       this.answerSentToParticipants = currentState.isAnswerVisible;
 
-      console.log('Validated visibility state with server:', {
-        isQuestionVisible: currentState.isQuestionVisible,
-        isAnswerVisible: currentState.isAnswerVisible,
-      });
+      // console.log('Validated visibility state with server:', {
+      //   isQuestionVisible: currentState.isQuestionVisible,
+      //   isAnswerVisible: currentState.isAnswerVisible,
+      // });
     }
   }
 
@@ -865,7 +855,7 @@ export class GameComponent implements OnInit, OnDestroy {
     const lobby = this.lobbyService.getCurrentLobby();
     if (!lobby) return;
 
-    console.log('Loading avatars for users in game component');
+    // console.log('Loading avatars for users in game component');
 
     // Load moderator avatar
     if (lobby.moderator) {
@@ -887,7 +877,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.lobbyService.getUserAvatar(username).subscribe({
       next: (response) => {
         if (response && response.avatarUrl) {
-          console.log(`Avatar loaded for ${username}:`, response.avatarUrl);
+          // console.log(`Avatar loaded for ${username}:`, response.avatarUrl);
           this.userAvatars.set(username, response.avatarUrl);
         } else {
           // Store empty string to avoid repeated requests

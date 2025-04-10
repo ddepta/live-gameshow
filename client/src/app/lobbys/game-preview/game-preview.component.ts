@@ -71,11 +71,11 @@ export class GamePreviewComponent implements OnInit, OnDestroy {
       next: (gameFile) => {
         this.gameData = gameFile.gameData;
         this.placeholderQuestionCount = gameFile.gameData.questions.length;
-        console.log('Game data loaded in GamePreviewComponent:', this.gameData);
+        // console.log('Game data loaded in GamePreviewComponent:', this.gameData);
         this.isLoading = false;
       },
       error: (err) => {
-        console.error('Error loading game data:', err);
+        // console.error('Error loading game data:', err);
         this.errorLoading = true;
         this.isLoading = false;
       },

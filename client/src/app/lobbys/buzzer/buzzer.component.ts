@@ -108,13 +108,13 @@ export class BuzzerComponent implements OnInit {
     this.lobbyService.getUserAvatar(username).subscribe({
       next: (response) => {
         if (response && response.avatarUrl) {
-          console.log('Avatar loaded for buzzer user:', response.avatarUrl);
+          // console.log('Avatar loaded for buzzer user:', response.avatarUrl);
           this.avatarUrl = response.avatarUrl;
         }
         this.isAvatarLoading = false;
       },
       error: (error) => {
-        console.error('Error loading buzzer avatar:', error);
+        // console.error('Error loading buzzer avatar:', error);
         this.isAvatarLoading = false;
       },
     });

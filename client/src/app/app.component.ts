@@ -57,7 +57,7 @@ export class AppComponent implements OnInit {
       audio.pause();
     } else {
       audio.play().catch((err) => {
-        console.error('Error playing audio:', err);
+        // console.error('Error playing audio:', err);
       });
     }
 

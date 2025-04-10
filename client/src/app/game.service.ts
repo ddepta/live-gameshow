@@ -44,7 +44,7 @@ export class GameService {
    * Kept for backward compatibility with components
    */
   loadGameData(): Observable<GameFile> {
-    console.log('Using directly imported game data');
+    // console.log('Using directly imported game data');
     return of(this.loadedGameFile);
   }
 
@@ -73,11 +73,11 @@ export class GameService {
    * Toggle showing demo questions
    */
   toggleDemoQuestions(show: boolean): void {
-    console.log(`GameService: Setting showDemoQuestions to ${show}`);
+    // console.log(`GameService: Setting showDemoQuestions to ${show}`);
     this.showDemoQuestionsSubject.next(show);
-    console.log(
-      `GameService: Current showDemoQuestions value: ${this.showDemoQuestionsSubject.value}`
-    );
+    // console.log(
+    //   `GameService: Current showDemoQuestions value: ${this.showDemoQuestionsSubject.value}`
+    // );
   }
 
   /**

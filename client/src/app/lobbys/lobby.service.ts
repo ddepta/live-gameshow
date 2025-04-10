@@ -101,7 +101,7 @@ export class LobbyService {
 
     // Listen for user list updates
     this.socket.on('lobby:userList', (update: UserListUpdate) => {
-      console.log('User list updated:', update);
+      // console.log('User list updated:', update);
 
       // Update the current lobby if it matches
       if (
@@ -118,7 +118,7 @@ export class LobbyService {
 
     // Listen for game started event
     this.socket.on('game:started', () => {
-      console.log('Game started event received');
+      // console.log('Game started event received');
       if (this.gameStateSubject.value) {
         this.gameStateSubject.next({
           ...this.gameStateSubject.value,
@@ -130,7 +130,7 @@ export class LobbyService {
 
     // Listen for question changed event
     this.socket.on('game:question:change', (questionIndex: number) => {
-      console.log('Question changed to:', questionIndex);
+      // console.log('Question changed to:', questionIndex);
       if (this.gameStateSubject.value) {
         this.gameStateSubject.next({
           ...this.gameStateSubject.value,
@@ -144,7 +144,7 @@ export class LobbyService {
 
     // Listen for game ended event
     this.socket.on('game:ended', () => {
-      console.log('Game ended event received');
+      // console.log('Game ended event received');
       if (this.gameStateSubject.value) {
         this.gameStateSubject.next({
           ...this.gameStateSubject.value,
@@ -156,7 +156,7 @@ export class LobbyService {
 
     // Add new handlers for question and answer visibility using socket.on
     this.socket.on('game:questionVisible', () => {
-      console.log('Question visible event received');
+      // console.log('Question visible event received');
       if (this.gameStateSubject.value) {
         this.gameStateSubject.next({
           ...this.gameStateSubject.value,
@@ -167,7 +167,7 @@ export class LobbyService {
     });
 
     this.socket.on('game:answerVisible', () => {
-      console.log('Answer visible event received');
+      // console.log('Answer visible event received');
       if (this.gameStateSubject.value) {
         this.gameStateSubject.next({
           ...this.gameStateSubject.value,
@@ -179,7 +179,7 @@ export class LobbyService {
 
     // Add listeners for question and answer hidden events
     this.socket.on('game:questionHidden', () => {
-      console.log('Question hidden event received');
+      // console.log('Question hidden event received');
       if (this.gameStateSubject.value) {
         this.gameStateSubject.next({
           ...this.gameStateSubject.value,
@@ -190,7 +190,7 @@ export class LobbyService {
     });
 
     this.socket.on('game:answerHidden', () => {
-      console.log('Answer hidden event received');
+      // console.log('Answer hidden event received');
       if (this.gameStateSubject.value) {
         this.gameStateSubject.next({
           ...this.gameStateSubject.value,
@@ -202,13 +202,13 @@ export class LobbyService {
 
     // Enhanced listener for submitted answers - with more explicit handling
     this.socket.on('game:answers', (update: AnswerUpdate) => {
-      console.log('Received answer update with payload:', update);
+      // console.log('Received answer update with payload:', update);
 
       if (
         this.currentLobby &&
         this.currentLobby.lobbyCode === update.lobbyCode
       ) {
-        console.log('Processing answers for current lobby');
+        // console.log('Processing answers for current lobby');
 
         // Extract the answers and ensure we're dealing with a proper array
         const answers = Array.isArray(update.answers) ? update.answers : [];
@@ -222,9 +222,9 @@ export class LobbyService {
 
         // Log each answer for debugging
         currentQuestionAnswers.forEach((answer) => {
-          console.log(
-            `Answer in service - username: ${answer.username}, question: ${answer.questionIndex}, value: ${answer.answer}`
-          );
+          // console.log(
+          //   `Answer in service - username: ${answer.username}, question: ${answer.questionIndex}, value: ${answer.answer}`
+          // );
         });
 
         // Create a new array to trigger change detection
@@ -239,10 +239,10 @@ export class LobbyService {
           const currentState = this.gameStateSubject.value;
           currentState.isQuestionVisible = true;
 
-          console.log('Current game state before updating:', {
-            isQuestionVisible: currentState.isQuestionVisible,
-            isAnswerVisible: currentState.isAnswerVisible,
-          });
+          // console.log('Current game state before updating:', {
+          //   isQuestionVisible: currentState.isQuestionVisible,
+          //   isAnswerVisible: currentState.isAnswerVisible,
+          // });
 
           // Only update if question index has changed
           // if (currentState.currentQuestionIndex !== update.questionIndex) {
@@ -261,16 +261,16 @@ export class LobbyService {
         }
 
         // Log the current value of the subject
-        console.log(
-          'Current value of answersSubject:',
-          this.answersSubject.value
-        );
+        // console.log(
+        //   'Current value of answersSubject:',
+        //   this.answersSubject.value
+        // );
       }
     });
 
     // Listen for point updates
     this.socket.on('points:updated', (updatedUser: User) => {
-      console.log('Point updated for user:', updatedUser);
+      // console.log('Point updated for user:', updatedUser);
       this.pointUpdatedSubject.next(updatedUser);
 
       // Also update the current lobby if applicable
@@ -301,7 +301,7 @@ export class LobbyService {
 
     // Listen for points reset
     this.socket.on('points:allReset', () => {
-      console.log('All points have been reset');
+      // console.log('All points have been reset');
 
       // Update local state if we have a lobby
       if (this.currentLobby) {
@@ -329,38 +329,38 @@ export class LobbyService {
     this.socket.on(
       'buzzer:pressed',
       (data: { socketId: string; username: string }) => {
-        console.log('Buzzer pressed by:', data.username);
+        // console.log('Buzzer pressed by:', data.username);
         this.activeBuzzerUserSubject.next(data);
       }
     );
 
     this.socket.on('buzzer:reset', () => {
-      console.log('Buzzers reset by server');
+      // console.log('Buzzers reset by server');
       this.activeBuzzerUserSubject.next(null);
     });
 
     // Listen for round completion results
     this.socket.on('buzzer:roundResult', (result: BuzzerRoundResult) => {
-      console.log('Buzzer round result received:', result);
+      // console.log('Buzzer round result received:', result);
       this.buzzerRoundCompletedSubject.next(result);
       this.activeBuzzerUserSubject.next(null);
     });
 
     // Update buzzer result event listener
     this.socket.on('buzzer:roundFinalized', (result: BuzzerRoundResult) => {
-      console.log('Buzzer round finalized:', result);
+      // console.log('Buzzer round finalized:', result);
       this.buzzerRoundCompletedSubject.next(result);
       this.activeBuzzerUserSubject.next(null);
     });
 
     this.socket.on('buzzer:evaluated', (judgment: BuzzerJudgment) => {
-      console.log('Buzzer evaluated:', judgment);
+      // console.log('Buzzer evaluated:', judgment);
       this.buzzerJudgmentSubject.next(judgment);
     });
 
     // Add listener for demo questions loaded event
     this.socket.on('game:demoQuestionsLoaded', () => {
-      console.log('Demo questions loaded event received');
+      // console.log('Demo questions loaded event received');
       this.demoQuestionsLoadedSubject.next();
     });
   }
@@ -393,7 +393,7 @@ export class LobbyService {
   }
 
   public getLobbyJoins = () => {
-    console.log('lobby joinded');
+    // console.log('lobby joinded');
     this.socket.on('lobby:joined', (message) => {
       this.lobbyJoinSubect.next(message);
     });
@@ -420,17 +420,17 @@ export class LobbyService {
 
   // New methods for game synchronization
   public startGame(lobbyCode: string): void {
-    console.log('Emitting game:start event for lobby:', lobbyCode);
+    // console.log('Emitting game:start event for lobby:', lobbyCode);
     this.socket.emit('game:start', lobbyCode);
   }
 
   public changeQuestion(lobbyCode: string, questionIndex: number): void {
-    console.log('Emitting game:question:change event:', questionIndex);
+    // console.log('Emitting game:question:change event:', questionIndex);
     this.socket.emit('game:question:change', lobbyCode, questionIndex);
   }
 
   public endGame(lobbyCode: string): void {
-    console.log('Emitting game:end event for lobby:', lobbyCode);
+    // console.log('Emitting game:end event for lobby:', lobbyCode);
     this.socket.emit('game:end', lobbyCode);
   }
 
@@ -502,22 +502,22 @@ export class LobbyService {
 
   // Add method to explicitly get game state with better logging
   public getGameState(lobbyCode: string): Observable<GameState | null> {
-    console.log('Requesting game state from server for lobby:', lobbyCode);
+    // console.log('Requesting game state from server for lobby:', lobbyCode);
     this.socket.emit(
       'game:getState',
       lobbyCode,
       (response: GameState | { error: string }) => {
         if ('error' in response) {
-          console.error('Error getting game state:', response.error);
+          // console.error('Error getting game state:', response.error);
         } else {
-          console.log('Received game state from server:', response);
+          // console.log('Received game state from server:', response);
           this.gameStateSubject.next(response);
 
           // Log the current state after update
-          console.log(
-            'Updated gameStateSubject with server state:',
-            this.gameStateSubject.value
-          );
+          // console.log(
+          //   'Updated gameStateSubject with server state:',
+          //   this.gameStateSubject.value
+          // );
         }
       }
     );
@@ -536,12 +536,12 @@ export class LobbyService {
     answer: string,
     type: 'multipleChoice' | 'estimation'
   ): void {
-    console.log('Submitting answer:', {
-      lobbyCode,
-      questionIndex,
-      answer,
-      type,
-    });
+    // console.log('Submitting answer:', {
+    //   lobbyCode,
+    //   questionIndex,
+    //   answer,
+    //   type,
+    // });
     this.socket.emit(
       'game:submitAnswer',
       lobbyCode,
@@ -553,7 +553,7 @@ export class LobbyService {
 
   // Enhanced method for getting answers
   getAnswers(): Observable<SubmittedAnswer[]> {
-    console.log('getAnswers called, current value:', this.answersSubject.value);
+    // console.log('getAnswers called, current value:', this.answersSubject.value);
 
     // Force a new emission with the current value to ensure subscribers receive it
     setTimeout(() => {
@@ -566,23 +566,23 @@ export class LobbyService {
 
   // Point management methods
   addPoint(lobbyCode: string, socketId: string): void {
-    console.log(`Adding point to user ${socketId} in lobby ${lobbyCode}`);
+    // console.log(`Adding point to user ${socketId} in lobby ${lobbyCode}`);
     this.socket.emit('points:add', lobbyCode, socketId, 1);
   }
 
   removePoint(lobbyCode: string, socketId: string): void {
-    console.log(`Removing point from user ${socketId} in lobby ${lobbyCode}`);
+    // console.log(`Removing point from user ${socketId} in lobby ${lobbyCode}`);
     // Call points:add with negative value to remove a point
     this.socket.emit('points:add', lobbyCode, socketId, -1);
   }
 
   setPoints(lobbyCode: string, socketId: string, points: number): void {
-    console.log(`Setting points for user ${socketId} to ${points}`);
+    // console.log(`Setting points for user ${socketId} to ${points}`);
     this.socket.emit('points:set', lobbyCode, socketId, points);
   }
 
   resetAllPoints(lobbyCode: string): void {
-    console.log(`Resetting all points in lobby ${lobbyCode}`);
+    // console.log(`Resetting all points in lobby ${lobbyCode}`);
     this.socket.emit('points:reset', lobbyCode);
   }
 
@@ -620,11 +620,11 @@ export class LobbyService {
     username: string,
     isCorrect: boolean
   ): void {
-    console.log(
-      `Completing buzzer round for ${username} with judgment: ${
-        isCorrect ? 'correct' : 'incorrect'
-      }`
-    );
+    // console.log(
+    //   `Completing buzzer round for ${username} with judgment: ${
+    //     isCorrect ? 'correct' : 'incorrect'
+    //   }`
+    // );
 
     // Update to match index.js expected event and payload
     this.socket.emit('buzzer:judge', {
@@ -642,7 +642,7 @@ export class LobbyService {
    * @param lobbyCode The lobby code
    */
   resetBuzzers(lobbyCode: string): void {
-    console.log('Resetting buzzers for lobby:', lobbyCode);
+    // console.log('Resetting buzzers for lobby:', lobbyCode);
     this.socket.emit('buzzer:reset', lobbyCode);
     this.activeBuzzerUserSubject.next(null);
   }
@@ -691,9 +691,9 @@ export class LobbyService {
     isCorrect: boolean,
     username: string
   ): void {
-    console.log(
-      `Evaluating buzzer answer as ${isCorrect ? 'correct' : 'incorrect'}`
-    );
+    // console.log(
+    //   `Evaluating buzzer answer as ${isCorrect ? 'correct' : 'incorrect'}`
+    // );
 
     // Match the server's buzzer:evaluate event
     this.socket.emit('buzzer:evaluate', lobbyCode, isCorrect);
@@ -705,7 +705,7 @@ export class LobbyService {
    * @param addPoints Whether to award points for correct answer
    */
   finalizeBuzzerRound(lobbyCode: string, addPoints: boolean = true): void {
-    console.log(`Finalizing buzzer round, addPoints: ${addPoints}`);
+    // console.log(`Finalizing buzzer round, addPoints: ${addPoints}`);
 
     // Match the server's buzzer:finalizeRound event
     this.socket.emit('buzzer:finalizeRound', lobbyCode, addPoints);
@@ -761,7 +761,7 @@ export class LobbyService {
 
   // Add method to broadcast the demo questions loaded state
   public loadDemoQuestions(lobbyCode: string): void {
-    console.log('Emitting game:loadDemoQuestions event for lobby:', lobbyCode);
+    // console.log('Emitting game:loadDemoQuestions event for lobby:', lobbyCode);
     this.socket.emit('game:loadDemoQuestions', lobbyCode);
   }
 

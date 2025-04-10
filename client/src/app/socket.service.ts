@@ -37,24 +37,24 @@ export class SocketService {
 
     // Handle reconnection attempts
     SocketService.socket.on('reconnect_attempt', () => {
-      console.log('Socket reconnecting - updating token');
+      // console.log('Socket reconnecting - updating token');
       const currentToken = localStorage.getItem('jwt_token');
       SocketService.socket.auth = { token: currentToken || undefined };
     });
 
     // Log connection events for debugging
     SocketService.socket.on('connect', () => {
-      console.log('Socket connected successfully');
+      // console.log('Socket connected successfully');
       this.connectionStatusSubject.next(true);
     });
 
     SocketService.socket.on('disconnect', () => {
-      console.log('Socket disconnected');
+      // console.log('Socket disconnected');
       this.connectionStatusSubject.next(false);
     });
 
     SocketService.socket.on('connect_error', (error) => {
-      console.error('Socket connection error:', error);
+      // console.error('Socket connection error:', error);
       this.connectionStatusSubject.next(false);
     });
   }
@@ -85,7 +85,7 @@ export class SocketService {
   updateToken(token: string | null): void {
     if (SocketService.socket) {
       SocketService.socket.auth = { token: token || undefined };
-      console.log('Socket auth token updated');
+      // console.log('Socket auth token updated');
     }
   }
 
@@ -93,7 +93,7 @@ export class SocketService {
   disconnect(): void {
     if (SocketService.socket) {
       SocketService.socket.disconnect();
-      console.log('Socket disconnected');
+      // console.log('Socket disconnected');
     }
   }
 }

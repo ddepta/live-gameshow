@@ -42,12 +42,12 @@ export class InteractiveUserPanelComponent
   ) {}
 
   ngOnInit(): void {
-    console.log('InteractiveUserPanelComponent initialized');
+    // console.log('InteractiveUserPanelComponent initialized');
 
     // Subscribe to user list updates
     this.subscriptions.push(
       this.lobbyService.getLobbyUpdates().subscribe((lobbyCode) => {
-        console.log('Lobby updated:', lobbyCode);
+        // console.log('Lobby updated:', lobbyCode);
         if (this.lobby && this.lobby.lobbyCode === lobbyCode) {
           // Update our local lobby with the latest data
           const updatedLobby = this.lobbyService.getCurrentLobby();
@@ -85,19 +85,19 @@ export class InteractiveUserPanelComponent
 
     // Only load avatars if lobby data is already available on init
     if (this.lobby && this.lobby.lobbyCode) {
-      console.log('Lobby already available on init, loading avatars');
+      // console.log('Lobby already available on init, loading avatars');
       this.loadAllUserAvatars();
     } else {
-      console.log(
-        'Lobby not available on init, will load avatars when lobby data arrives'
-      );
+      // console.log(
+      //   'Lobby not available on init, will load avatars when lobby data arrives'
+      // );
     }
   }
 
   // React to input changes (when lobby is passed from parent)
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['lobby'] && changes['lobby'].currentValue) {
-      console.log('Lobby input changed, loading avatars');
+      // console.log('Lobby input changed, loading avatars');
       this.loadAllUserAvatars();
     }
   }
@@ -135,7 +135,7 @@ export class InteractiveUserPanelComponent
 
   kickUser(user: User): void {
     if (!this.isModerator || !this.lobby) return;
-    console.log('kick user: ', user);
+    // console.log('kick user: ', user);
 
     this.lobbyService.kickUser(this.lobby.lobbyCode, user.socketId);
   }
@@ -183,36 +183,36 @@ export class InteractiveUserPanelComponent
   private loadAllUserAvatars(): void {
     // Safely guard against attempting to load avatars with no lobby data
     if (!this.lobby || !this.lobby.lobbyCode) {
-      console.log('loadAllUserAvatars: No lobby data available yet');
+      // console.log('loadAllUserAvatars: No lobby data available yet');
       return;
     }
 
     if (this.avatarsLoading) {
-      console.log('Avatar loading already in progress, skipping');
+      // console.log('Avatar loading already in progress, skipping');
       return;
     }
 
-    console.log(
-      'Starting avatar loading process for lobby:',
-      this.lobby.lobbyCode
-    );
+    // console.log(
+    //   'Starting avatar loading process for lobby:',
+    //   this.lobby.lobbyCode
+    // );
     this.avatarsLoading = true;
 
     // Load moderator avatar
     if (this.lobby.moderator) {
       this.loadUserAvatar(this.lobby.moderator.username);
     } else {
-      console.log('No moderator found in lobby');
+      // console.log('No moderator found in lobby');
     }
 
     // Load avatars for all other users
     if (this.lobby.users && this.lobby.users.length > 0) {
-      console.log(`Loading avatars for ${this.lobby.users.length} users`);
+      // console.log(`Loading avatars for ${this.lobby.users.length} users`);
       this.lobby.users.forEach((user) => {
         this.loadUserAvatar(user.username);
       });
     } else {
-      console.log('No users found in lobby');
+      // console.log('No users found in lobby');
     }
 
     this.avatarsLoading = false;
@@ -221,30 +221,30 @@ export class InteractiveUserPanelComponent
   private loadUserAvatar(username: string): void {
     // Skip if we already have this avatar
     if (!username) {
-      console.log('Cannot load avatar for empty username');
+      // console.log('Cannot load avatar for empty username');
       return;
     }
 
     if (this.userAvatars.has(username)) {
-      console.log(`Already have avatar for ${username}, skipping load`);
+      // console.log(`Already have avatar for ${username}, skipping load`);
       return;
     }
 
-    console.log(`Loading avatar for ${username}`);
+    // console.log(`Loading avatar for ${username}`);
 
     this.lobbyService.getUserAvatar(username).subscribe({
       next: (response) => {
         if (response && response.avatarUrl) {
-          console.log(`Avatar received for ${username}:`, response.avatarUrl);
+          // console.log(`Avatar received for ${username}:`, response.avatarUrl);
           this.userAvatars.set(username, response.avatarUrl);
           this.cdr.detectChanges(); // Update the view
         } else {
-          console.log(`Empty avatar URL received for ${username}`);
+          // console.log(`Empty avatar URL received for ${username}`);
           this.userAvatars.set(username, ''); // Store empty string to avoid retries
         }
       },
       error: (error) => {
-        console.log(`Error loading avatar for ${username}:`, error);
+        // console.log(`Error loading avatar for ${username}:`, error);
         // Set empty string to avoid loading attempts for the same user again
         this.userAvatars.set(username, '');
       },

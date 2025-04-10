@@ -30,7 +30,7 @@ export class BuzzerService {
 
   public getBuzzer = () => {
     this.socket.on('buzzer:pressed', (message) => {
-      console.log('buzzer:pressed: ', message);
+      // console.log('buzzer:pressed: ', message);
       this.buzzerSubject.next(message);
     });
     return this.buzzerSubject;

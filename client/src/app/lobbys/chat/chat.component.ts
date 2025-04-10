@@ -41,7 +41,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   constructor(private messageService: MessageService) {
     // Get username from localStorage
     this.username = localStorage.getItem('username') || '';
-    console.log('Current username:', this.username);
+    // console.log('Current username:', this.username);
   }
 
   ngOnInit() {
@@ -49,7 +49,7 @@ export class ChatComponent implements OnInit, OnDestroy {
       .getNewMessage()
       .subscribe((message: Message) => {
         if (message.text) {
-          console.log('Received message:', message);
+          // console.log('Received message:', message);
 
           // Check if this is our own message by comparing usernames
           if (message.username === this.username) {
@@ -100,7 +100,7 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   sendMessage() {
     if (this.newMessage.trim()) {
-      console.log('Sending message:', this.newMessage);
+      // console.log('Sending message:', this.newMessage);
 
       // Track this message as one we sent
       this.sentMessages.push({
