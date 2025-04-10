@@ -1,4 +1,10 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  ViewChild,
+  ElementRef,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { LobbyService } from '../lobby.service';
 import { FormsModule } from '@angular/forms';
@@ -47,6 +53,9 @@ export class JoinLobbyComponent implements OnInit, OnDestroy {
   private avatarLoadAttempts = 0;
   private maxAttempts = 3;
   private pendingAvatarUrl: string | null = null; // Store URL of image being preloaded
+
+  @ViewChild('usernameInput') usernameInput!: ElementRef;
+  @ViewChild('lobbyCodeInput') lobbyCodeInput!: ElementRef;
 
   constructor(
     private lobbyService: LobbyService,
@@ -151,23 +160,65 @@ export class JoinLobbyComponent implements OnInit, OnDestroy {
   }
 
   joinLobby() {
-    this.lobbyService
-      .joinLobby(this.username, this.lobbyCode)
-      .subscribe((result: any) => {
-        console.log('join lobby result: ', result);
-        if (!result.error) {
-          console.log('no error: ', result);
-          localStorage.setItem('jwt_token', result.token);
-          localStorage.setItem('username', result.username);
-          this.router.navigate(['/lobby', result.lobbyCode]);
-        }
-      });
+    // Validate both inputs
+    let isValid = true;
+    console.log('joinlobby');
+
+    // Check username
+    if (!this.username || this.username.trim() === '') {
+      this.triggerShakeAnimation(this.usernameInput?.nativeElement);
+      isValid = false;
+    }
+
+    // Check lobby code
+    if (!this.lobbyCode || this.lobbyCode.trim() === '') {
+      this.triggerShakeAnimation(this.lobbyCodeInput?.nativeElement);
+      isValid = false;
+    }
+
+    // Only proceed if both fields are valid
+    if (isValid) {
+      this.lobbyService
+        .joinLobby(this.username, this.lobbyCode)
+        .subscribe((result: any) => {
+          console.log('join lobby result: ', result);
+          if (!result.error) {
+            console.log('no error: ', result);
+            localStorage.setItem('jwt_token', result.token);
+            localStorage.setItem('username', result.username);
+            this.router.navigate(['/lobby', result.lobbyCode]);
+          } else {
+            this.triggerShakeAnimation(this.lobbyCodeInput?.nativeElement);
+          }
+        });
+    }
+  }
+
+  // Helper method to manually trigger shake animation
+  triggerShakeAnimation(element: HTMLElement) {
+    if (element) {
+      // Force the input to be validated
+      element.classList.remove('ng-valid');
+      element.classList.add('ng-invalid');
+
+      // Remove and re-add animation to trigger it again if already animating
+      element.style.animation = 'none';
+      setTimeout(() => {
+        element.style.animation = '';
+      }, 10);
+    }
   }
 
   createLobby() {
+    // Only validate the username for lobby creation
+    if (!this.username || this.username.trim() === '') {
+      this.triggerShakeAnimation(this.usernameInput?.nativeElement);
+      return;
+    }
+
     this.lobbyService.joinLobby(this.username).subscribe((result: any) => {
-      console.log('result: ', result);
-      if (result !== 'error') {
+      console.log('createlobby result: ', result);
+      if (!result.error) {
         localStorage.setItem('jwt_token', result.token);
         localStorage.setItem('username', result.username);
         this.router.navigate(['/lobby', result.lobbyCode]);
