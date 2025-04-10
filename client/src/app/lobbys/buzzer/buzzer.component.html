@@ -1,4 +1,9 @@
 <div class="buzzer-container">
+  <!-- Username display above buzzer -->
+  <div class="username-display" *ngIf="activeBuzzer">
+    {{ buzzerName }}
+  </div>
+
   <button
     class="buzzer-button"
     [class.large]="size === 'large'"
@@ -10,16 +15,36 @@
   >
     <div class="buzzer-inner static-ring">
       <div class="pulse-ring"></div>
-      <div class="profile-placeholder">
+      <div
+        class="profile-placeholder"
+        [class.has-avatar]="activeBuzzer && avatarUrl"
+      >
+        <!-- Show avatar when buzzer is active and avatar is available -->
+        <img
+          *ngIf="activeBuzzer && avatarUrl"
+          [src]="avatarUrl"
+          alt="User Avatar"
+          class="buzzer-avatar"
+        />
+
+        <!-- Show initial as fallback if avatar isn't available but buzzer is active -->
+        <div class="avatar-initial" *ngIf="activeBuzzer && !avatarUrl">
+          GEBUZZERT!
+        </div>
+
+        <!-- Show "BUZZ!" text when buzzer is idle -->
         <span *ngIf="!activeBuzzer && !buzzerLocked">BUZZ!</span>
+
+        <!-- Show lock icon when buzzer is locked -->
         <ng-icon
           *ngIf="buzzerLocked"
           name="phosphorLockLaminatedFill"
           size="1.3em"
         ></ng-icon>
-        <div class="buzzer-status" *ngIf="activeBuzzer" @fadeIn>
-          <div class="buzzer-name">{{ buzzerName }}</div>
-          <div class="buzzer-text">BUZZER</div>
+
+        <!-- Show small loading indicator while avatar is loading -->
+        <div class="avatar-loading" *ngIf="isAvatarLoading">
+          <div class="avatar-spinner"></div>
         </div>
       </div>
     </div>
