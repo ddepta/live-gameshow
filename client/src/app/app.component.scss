@@ -11,3 +11,29 @@ h1 {
   color: var(--p-primary-color);
   text-align: center;
 }
+
+.gradient-toggle-btn {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 1000;
+  background-color: var(--p-surface-900);
+  color: var(--p-primary-color);
+  border: 1px solid var(--p-primary-color);
+  border-radius: 5px;
+  padding: 8px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Orbit";
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(0, 255, 191, 0.4);
+  transition: all 0.3s ease;
+
+  &:hover {
+    background-color: var(--p-surface-800);
+    box-shadow: 0 0 15px rgba(0, 255, 191, 0.6);
+  }
+}

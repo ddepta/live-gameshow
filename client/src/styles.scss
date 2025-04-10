@@ -53,20 +53,27 @@ app-root::before {
   right: 0;
   bottom: 0;
   z-index: -1; /* Position it behind all content */
-  // background: conic-gradient(
-  //   from 180deg at 50% 70%,
-  //   #022c22 0deg,
-  //   #065f46 72deg,
-  //   #022c22 144deg,
-  //   #065f46 216deg,
-  //   #022c22 288deg,
-  //   #065f46 1turn
-  // );
-  // mask: radial-gradient(circle at 40% 40%, white 2px, transparent 2.5px) 50% 50% /
-  //     var(--size) var(--size),
-  //   url("assets/images/image.png") 256px 50% / 256px 256px;
-  // mask-composite: intersect;
-  // animation: flicker 20s infinite linear;
+  background: conic-gradient(
+    from 180deg at 50% 70%,
+    #022c22 0deg,
+    #065f46 72deg,
+    #022c22 144deg,
+    #065f46 216deg,
+    #022c22 288deg,
+    #065f46 1turn
+  );
+  mask: radial-gradient(circle at 40% 40%, white 2px, transparent 2.5px) 50% 50% /
+      var(--size) var(--size),
+    url("assets/images/image.png") 256px 50% / 256px 256px;
+  mask-composite: intersect;
+  animation: flicker 20s infinite linear;
+}
+
+/* Add styles to disable gradient when the class is present */
+:root.gradient-disabled app-root::before {
+  background: var(--p-surface-950); /* Solid background color when disabled */
+  mask: none;
+  animation: none;
 }
 
 @keyframes flicker {
