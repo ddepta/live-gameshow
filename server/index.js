@@ -666,6 +666,7 @@ io.on("connection", (socket) => {
 
     const lobby = lobbys.find((lobby) => lobby.lobbyCode === lobbyCode);
     if (lobby) {
+      console.log("Game state found:", lobby.gameState);
       // Return the current game state
       callback({
         isGameActive: lobby.gameState.isGameActive,
@@ -749,6 +750,7 @@ io.on("connection", (socket) => {
         if (!lobby.submittedAnswers) {
           lobby.submittedAnswers = [];
         }
+        lobby.gameState.isQuestionVisible = true; // Show answer after submission
 
         // Create the answer entry with a unique ID to help with updates
         const answerEntry = {

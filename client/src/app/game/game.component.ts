@@ -124,15 +124,29 @@ export class GameComponent implements OnInit, OnDestroy {
     this.gameData = this.gameService.getGameData();
     this.setCurrentQuestion(0);
 
-    // Check game state for initial question index
+    // Check game state for initial question index with improved logging
     this.lobbyService.getGameState(this.lobbyCode).subscribe((gameState) => {
+      console.log('Received game state in component:', gameState);
       if (gameState) {
         this.currentQuestionIndex = gameState.currentQuestionIndex;
+
+        console.log('Setting visibility flags:', {
+          wasQuestionVisible: this.isQuestionVisibleToParticipants,
+          nowQuestionVisible: gameState.isQuestionVisible,
+          wasAnswerVisible: this.isAnswerVisibleToParticipants,
+          nowAnswerVisible: gameState.isAnswerVisible,
+        });
+
         this.isQuestionVisibleToParticipants = gameState.isQuestionVisible;
         this.isAnswerVisibleToParticipants = gameState.isAnswerVisible;
         this.questionSentToParticipants = gameState.isQuestionVisible;
         this.answerSentToParticipants = gameState.isAnswerVisible;
         this.setCurrentQuestion(gameState.currentQuestionIndex);
+
+        console.log('Updated visibility state:', {
+          isQuestionVisibleToParticipants: this.isQuestionVisibleToParticipants,
+          isAnswerVisibleToParticipants: this.isAnswerVisibleToParticipants,
+        });
       }
     });
 
@@ -140,10 +154,15 @@ export class GameComponent implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.lobbyService.onQuestionVisible().subscribe(() => {
         this.isQuestionVisibleToParticipants = true;
+        // Keep questionSentToParticipants in sync with visibility state
+        this.questionSentToParticipants = true;
       }),
       this.lobbyService.onQuestionHidden().subscribe(() => {
         this.isQuestionVisibleToParticipants = false;
+        // Keep questionSentToParticipants in sync with visibility state
+        this.questionSentToParticipants = false;
       }),
+
       this.lobbyService.onAnswerVisible().subscribe(() => {
         // When answer becomes visible, activate animation for participants
         if (!this.isModerator) {
@@ -389,11 +408,13 @@ export class GameComponent implements OnInit, OnDestroy {
 
   // Question & answer visibility control for moderator
   setQuestionVisibility(visible: boolean): void {
+    console.log(`Setting question visibility to ${visible} for participants`);
     this.questionSentToParticipants = visible;
     this.lobbyService.toggleQuestionVisibility(this.lobbyCode, visible);
   }
 
   setAnswerVisibility(visible: boolean): void {
+    console.log(`Setting answer visibility to ${visible} for participants`);
     // Automatically remove blur when moderator makes question visible
     if (visible && this.isModerator) {
       this.isAnswerBlurred = false;
@@ -417,6 +438,10 @@ export class GameComponent implements OnInit, OnDestroy {
   confirmMultipleChoice(): void {
     if (this.selectedAnswer && !this.multipleChoiceSubmitted) {
       console.log('Submitting multiple choice answer:', this.selectedAnswer);
+
+      // Validate state with server before submission
+      this.validateVisibilityState();
+
       this.lobbyService.submitAnswer(
         this.lobbyCode,
         this.currentQuestionIndex,
@@ -424,14 +449,28 @@ export class GameComponent implements OnInit, OnDestroy {
         'multipleChoice'
       );
       this.multipleChoiceSubmitted = true;
+
+      // Ensure visibility state remains consistent after submission
+      setTimeout(() => {
+        this.validateVisibilityState();
+      }, 500);
     }
   }
 
-  // Estimation submission
+  // Estimation submission with additional logging
   submitEstimation(value: string): void {
     // Only proceed if NOT a moderator and value is provided
     if (!this.isModerator && value && !this.estimationSubmitted) {
       console.log('Submitting estimation:', value);
+      console.log('Current visibility state before submit:', {
+        isQuestionVisibleToParticipants: this.isQuestionVisibleToParticipants,
+        questionSentToParticipants: this.questionSentToParticipants,
+        isAnswerVisibleToParticipants: this.isAnswerVisibleToParticipants,
+      });
+
+      // Validate state with server before submission
+      this.validateVisibilityState();
+
       this.lobbyService.submitAnswer(
         this.lobbyCode,
         this.currentQuestionIndex,
@@ -439,6 +478,16 @@ export class GameComponent implements OnInit, OnDestroy {
         'estimation'
       );
       this.estimationSubmitted = true;
+
+      // Ensure visibility state remains consistent after submission
+      setTimeout(() => {
+        this.validateVisibilityState();
+        console.log('Visibility state after submit:', {
+          isQuestionVisibleToParticipants: this.isQuestionVisibleToParticipants,
+          questionSentToParticipants: this.questionSentToParticipants,
+          isAnswerVisibleToParticipants: this.isAnswerVisibleToParticipants,
+        });
+      }, 500);
     }
   }
 
@@ -765,5 +814,23 @@ export class GameComponent implements OnInit, OnDestroy {
    */
   private resetEstimationJudgments(): void {
     this.estimationJudgments = {};
+  }
+
+  // Add a method to specifically check and update visibility state with the server
+  private validateVisibilityState(): void {
+    // Get the current game state from the service to ensure flags are in sync
+    const currentState = this.lobbyService.getCurrentGameState();
+    if (currentState) {
+      // Always keep local visibility flags in sync with the server state
+      this.isQuestionVisibleToParticipants = currentState.isQuestionVisible;
+      this.questionSentToParticipants = currentState.isQuestionVisible;
+      this.isAnswerVisibleToParticipants = currentState.isAnswerVisible;
+      this.answerSentToParticipants = currentState.isAnswerVisible;
+
+      console.log('Validated visibility state with server:', {
+        isQuestionVisible: currentState.isQuestionVisible,
+        isAnswerVisible: currentState.isAnswerVisible,
+      });
+    }
   }
 }

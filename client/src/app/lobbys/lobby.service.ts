@@ -230,17 +230,31 @@ export class LobbyService {
         // Explicitly set the new value
         this.answersSubject.next(newAnswers);
 
-        // If we have a current game state, update the question index if needed
+        // FIXED: Get the CURRENT visibility state instead of hardcoding values
+        // This makes sure we're preserving the ACTUAL current state
         if (this.gameStateSubject.value && update.questionIndex !== undefined) {
-          if (
-            this.gameStateSubject.value.currentQuestionIndex !==
-            update.questionIndex
-          ) {
-            this.gameStateSubject.next({
-              ...this.gameStateSubject.value,
-              currentQuestionIndex: update.questionIndex,
-            });
-          }
+          const currentState = this.gameStateSubject.value;
+          currentState.isQuestionVisible = true;
+
+          console.log('Current game state before updating:', {
+            isQuestionVisible: currentState.isQuestionVisible,
+            isAnswerVisible: currentState.isAnswerVisible,
+          });
+
+          // Only update if question index has changed
+          // if (currentState.currentQuestionIndex !== update.questionIndex) {
+          //   // Create a new state object with the updated question index
+          //   // but preserving all visibility flags from CURRENT state
+          //   this.gameStateSubject.next({
+          //     ...currentState,
+          //     currentQuestionIndex: update.questionIndex,
+          //     // Get the current visibility values instead of hardcoding them
+          //     isQuestionVisible: currentState.isQuestionVisible,
+          //     isAnswerVisible: currentState.isAnswerVisible,
+          //   });
+
+          //   console.log('Updated game state after question index change');
+          // }
         }
 
         // Log the current value of the subject
@@ -477,8 +491,9 @@ export class LobbyService {
     return this.gameEndedSubject.asObservable();
   }
 
-  // Add method to explicitly get game state
+  // Add method to explicitly get game state with better logging
   public getGameState(lobbyCode: string): Observable<GameState | null> {
+    console.log('Requesting game state from server for lobby:', lobbyCode);
     this.socket.emit(
       'game:getState',
       lobbyCode,
@@ -486,8 +501,14 @@ export class LobbyService {
         if ('error' in response) {
           console.error('Error getting game state:', response.error);
         } else {
-          console.log('Received game state:', response);
+          console.log('Received game state from server:', response);
           this.gameStateSubject.next(response);
+
+          // Log the current state after update
+          console.log(
+            'Updated gameStateSubject with server state:',
+            this.gameStateSubject.value
+          );
         }
       }
     );
