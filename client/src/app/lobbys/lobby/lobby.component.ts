@@ -12,6 +12,7 @@ import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { ButtonModule } from 'primeng/button';
 import { GameComponent } from '../../game/game.component';
+import { ResultComponent } from '../../game/result/result.component'; // Add import for ResultComponent
 import { GameData } from '../../game.service';
 import { Subscription } from 'rxjs';
 
@@ -27,7 +28,8 @@ import { Subscription } from 'rxjs';
     InteractiveUserPanelComponent,
     GetLobbyCodeComponent,
     ButtonModule,
-    GameComponent, // Add GameComponent to the imports
+    GameComponent,
+    ResultComponent, // Add ResultComponent to imports
   ],
   providers: [GameService],
   templateUrl: './lobby.component.html',
@@ -38,6 +40,7 @@ export class LobbyComponent implements OnInit, OnDestroy {
   lobby!: Lobby;
   eventHistory: EventHistory[] = [];
   isGameStarted = false;
+  isGameEnded = false; // New flag to track if game has ended
   gameData: GameData | null = null;
   currentQuestionIndex = 0;
   private subscriptions: Subscription[] = [];
@@ -121,6 +124,7 @@ export class LobbyComponent implements OnInit, OnDestroy {
       this.lobbyService.onGameEnded().subscribe(() => {
         console.log('Game ended by moderator - flipping back to lobby view');
         this.isGameStarted = false;
+        this.isGameEnded = true; // Set flag when game ends
       })
     );
   }
@@ -160,6 +164,7 @@ export class LobbyComponent implements OnInit, OnDestroy {
   endGame(): void {
     // Return to lobby mode
     this.isGameStarted = false;
+    this.isGameEnded = true; // Set flag when ending the game
 
     // If moderator ends game, broadcast to other users
     if (this.lobby.isModerator) {

@@ -176,7 +176,18 @@
                     class="user-avatar"
                     [title]="user.username"
                   >
-                    {{ user.username.charAt(0).toUpperCase() }}
+                    <!-- Add avatar image when available -->
+                    <img
+                      *ngIf="getAvatarUrl(user.username)"
+                      [src]="getAvatarUrl(user.username)"
+                      alt="Avatar"
+                    />
+                    <!-- Fallback to initial when no avatar is available -->
+                    <span
+                      *ngIf="!getAvatarUrl(user.username)"
+                      class="avatar-initial"
+                      >{{ getInitial(user.username) }}</span
+                    >
                   </span>
                 </span>
               </span>
@@ -324,15 +335,33 @@
           "
         >
           <div class="answer-meta">
-            <div class="answer-user">{{ answer.username }}</div>
-            <div class="answer-type">
-              {{
-                answer.type === "multipleChoice"
-                  ? "Multiple Choice"
-                  : "Schätzung"
-              }}
+            <!-- User avatar moved outside of answer-user-container -->
+            <div class="user-avatar">
+              <img
+                *ngIf="getAvatarUrl(answer.username)"
+                [src]="getAvatarUrl(answer.username)"
+                alt="Avatar"
+              />
+              <span
+                *ngIf="!getAvatarUrl(answer.username)"
+                class="avatar-initial"
+                >{{ getInitial(answer.username) }}</span
+              >
+            </div>
+
+            <!-- User info container without avatar -->
+            <div class="user-info">
+              <div class="answer-user">{{ answer.username }}</div>
+              <div class="answer-type">
+                {{
+                  answer.type === "multipleChoice"
+                    ? "Multiple Choice"
+                    : "Schätzung"
+                }}
+              </div>
             </div>
           </div>
+
           <div class="answer-value">{{ answer.answer }}</div>
 
           <!-- Replace the existing judgment buttons/result section with a version that always shows buttons -->

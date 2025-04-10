@@ -114,6 +114,9 @@ export class GameComponent implements OnInit, OnDestroy {
   // Add tracking for estimation round state
   estimationRoundCompleted = false;
 
+  // Add map for avatar URLs
+  private userAvatars = new Map<string, string>();
+
   constructor(
     private gameService: GameService,
     private lobbyService: LobbyService
@@ -247,6 +250,18 @@ export class GameComponent implements OnInit, OnDestroy {
         this.lastRoundResult = result;
       })
     );
+
+    // Add subscription to user list updates to fetch avatars
+    this.subscriptions.push(
+      this.lobbyService.getLobbyUpdates().subscribe((lobbyCode) => {
+        if (lobbyCode === this.lobbyCode) {
+          this.loadAllUserAvatars();
+        }
+      })
+    );
+
+    // Load avatars initially
+    this.loadAllUserAvatars();
   }
 
   ngOnDestroy(): void {
@@ -832,5 +847,57 @@ export class GameComponent implements OnInit, OnDestroy {
         isAnswerVisible: currentState.isAnswerVisible,
       });
     }
+  }
+
+  // Methods for avatar handling
+  getAvatarUrl(username: string): string | null {
+    return this.userAvatars.get(username) || null;
+  }
+
+  // Add the missing getInitial method
+  getInitial(username: string): string {
+    return username && username.length > 0
+      ? username.charAt(0).toUpperCase()
+      : '?';
+  }
+
+  private loadAllUserAvatars(): void {
+    const lobby = this.lobbyService.getCurrentLobby();
+    if (!lobby) return;
+
+    console.log('Loading avatars for users in game component');
+
+    // Load moderator avatar
+    if (lobby.moderator) {
+      this.loadUserAvatar(lobby.moderator.username);
+    }
+
+    // Load avatars for other users
+    if (lobby.users && lobby.users.length > 0) {
+      lobby.users.forEach((user) => {
+        this.loadUserAvatar(user.username);
+      });
+    }
+  }
+
+  private loadUserAvatar(username: string): void {
+    // Skip if no username or already loaded
+    if (!username || this.userAvatars.has(username)) return;
+
+    this.lobbyService.getUserAvatar(username).subscribe({
+      next: (response) => {
+        if (response && response.avatarUrl) {
+          console.log(`Avatar loaded for ${username}:`, response.avatarUrl);
+          this.userAvatars.set(username, response.avatarUrl);
+        } else {
+          // Store empty string to avoid repeated requests
+          this.userAvatars.set(username, '');
+        }
+      },
+      error: () => {
+        // Set empty string on error to avoid retries
+        this.userAvatars.set(username, '');
+      },
+    });
   }
 }

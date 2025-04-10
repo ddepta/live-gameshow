@@ -579,6 +579,47 @@
   // }
 }
 
+/* Update the answer-meta structure for avatars */
+.answer-meta {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Remove answer-user-container and replace with user-info */
+.user-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Update avatar styling to take full height */
+.answer-item .user-avatar {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  background-color: var(--p-primary-700);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.answer-user {
+  font-weight: bold;
+  font-size: 1em;
+}
+
+.answer-type {
+  font-size: 0.8em;
+  color: var(--p-primary-300);
+}
+
 @keyframes slideAnswerIn {
   from {
     transform: translateY(-100%);
@@ -878,7 +919,9 @@
   .answer-meta {
     flex: 1;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
   }
 
   .answer-value {
@@ -888,6 +931,63 @@
     flex: 1;
     margin: 0 15px;
   }
+}
+
+/* Remove answer-user-container and replace with user-info */
+.user-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Update avatar styling to take full height */
+.answer-item .user-avatar {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  background-color: var(--p-primary-700);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.answer-user {
+  font-weight: bold;
+  font-size: 1em;
+}
+
+.answer-type {
+  font-size: 0.8em;
+  color: var(--p-primary-300);
+}
+
+/* Add container for user info with avatar */
+.answer-user-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+
+  .user-avatar {
+    width: 24px;
+    height: 24px;
+    min-width: 24px; /* Prevent shrinking */
+    /* Rest of avatar styling is already defined in the file */
+  }
+
+  .answer-user {
+    font-weight: bold;
+    font-size: 1em;
+  }
+}
+
+.answer-type {
+  font-size: 0.8em;
+  color: var(--p-primary-300);
 }
 
 /* Add styles for the judgment buttons */
@@ -1297,5 +1397,32 @@
 
   &.answer-hidden {
     visibility: hidden;
+  }
+}
+
+// Update the user avatar styling
+.user-avatar {
+  width: 25px;
+  height: 25px;
+  min-width: 25px; // Prevent shrinking
+  border-radius: 50%;
+  overflow: hidden;
+  background-color: var(--p-primary-700);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .avatar-initial {
+    color: white;
+    font-weight: bold;
+    font-size: 12px;
+    text-transform: uppercase;
   }
 }

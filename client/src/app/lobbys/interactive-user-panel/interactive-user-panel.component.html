@@ -3,7 +3,7 @@
     <h3 class="panel-title">TEILNEHMER</h3>
 
     <div class="users-list">
-      <!-- Moderator -->
+      <!-- Moderator - Remove points badge -->
       <div class="user-item moderator" *ngIf="displayedModerator">
         <!-- Avatar for moderator -->
         <div class="user-avatar">
@@ -27,12 +27,7 @@
         <span class="user-name"
           >{{ displayedModerator.username }} (Moderator)</span
         >
-        <span
-          class="points-badge"
-          *ngIf="displayedModerator.points !== undefined"
-        >
-          {{ displayedModerator.points }}
-        </span>
+        <!-- Points badge for moderator removed -->
       </div>
       <div
         class="divider"

@@ -35,11 +35,17 @@
       <div class="flip-card-inner">
         <!-- Front side (Lobby view) -->
         <div class="flip-card-front">
-          <div class="game-preview-wrapper">
+          <!-- Show game preview before game starts, result component after it ends -->
+          <div *ngIf="!isGameEnded" class="game-preview-wrapper">
             <app-game-preview></app-game-preview>
           </div>
+          <div *ngIf="isGameEnded" class="result-wrapper">
+            <!-- Remove the [key] binding and pass the lobby code directly -->
+            <app-result [lobbyCode]="lobby?.lobbyCode"></app-result>
+          </div>
 
-          <div class="buzzer-section">
+          <!-- Only show buzzer section before game starts -->
+          <div *ngIf="!isGameEnded" class="buzzer-section">
             <h3 class="center">TESTBUZZER</h3>
             <div class="buzzer-wrapper">
               <app-buzzer

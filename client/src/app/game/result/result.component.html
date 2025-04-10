@@ -1,0 +1,25 @@
+<div class="results-container">
+  <h2>Endergebnis</h2>
+
+  <div class="score-table" *ngIf="sortedResults.length > 0">
+    <div class="score-header">
+      <div class="rank">Rang</div>
+      <div class="name">Name</div>
+      <div class="points">Punkte</div>
+    </div>
+
+    <!-- Show sorted results -->
+    <div *ngFor="let result of sortedResults; let i = index" class="score-row">
+      <div class="rank">{{ i + 1 }}</div>
+      <div class="name">
+        {{ result.username }}{{ result.isModerator ? " (M)" : "" }}
+      </div>
+      <div class="points">{{ result.points }}</div>
+    </div>
+  </div>
+
+  <!-- Show message if no results -->
+  <div *ngIf="sortedResults.length === 0" class="no-results">
+    Keine Punkte wurden vergeben.
+  </div>
+</div>
