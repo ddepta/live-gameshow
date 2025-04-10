@@ -1,4 +1,10 @@
-import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  ViewChild,
+  OnDestroy,
+  ElementRef,
+} from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { LobbyService } from '../lobby.service';
 import { Lobby, EventHistory } from '../../types';
@@ -15,6 +21,13 @@ import { GameComponent } from '../../game/game.component';
 import { ResultComponent } from '../../game/result/result.component'; // Add import for ResultComponent
 import { GameData } from '../../game.service';
 import { Subscription } from 'rxjs';
+import {
+  gameAbstract020,
+  gameCloudUpload,
+  gameRetroController,
+  gameSave,
+} from '@ng-icons/game-icons';
+import { NgIcon, provideIcons } from '@ng-icons/core';
 
 @Component({
   selector: 'app-lobby',
@@ -29,9 +42,17 @@ import { Subscription } from 'rxjs';
     GetLobbyCodeComponent,
     ButtonModule,
     GameComponent,
-    ResultComponent, // Add ResultComponent to imports
+    ResultComponent,
+    NgIcon,
   ],
-  providers: [GameService],
+  providers: [
+    GameService,
+    provideIcons({
+      gameRetroController,
+      gameAbstract020,
+      gameSave,
+    }),
+  ],
   templateUrl: './lobby.component.html',
   styleUrls: ['./lobby.component.scss'],
 })
@@ -44,8 +65,10 @@ export class LobbyComponent implements OnInit, OnDestroy {
   gameData: GameData | null = null;
   currentQuestionIndex = 0;
   private subscriptions: Subscription[] = [];
+  isDemoQuestionsLoaded = false;
 
   @ViewChild(GameComponent) gameComponent?: GameComponent;
+  @ViewChild('fileInput') fileInput!: ElementRef;
 
   constructor(
     private router: Router,
@@ -127,6 +150,18 @@ export class LobbyComponent implements OnInit, OnDestroy {
         this.isGameEnded = true; // Set flag when game ends
       })
     );
+
+    // Check if demo questions are already enabled
+    this.isDemoQuestionsLoaded = this.gameService.isDemoQuestionsActive();
+
+    // Subscribe to demo questions loaded events
+    this.subscriptions.push(
+      this.lobbyService.onDemoQuestionsLoaded().subscribe(() => {
+        console.log('Demo questions loaded event received in component');
+        this.isDemoQuestionsLoaded = true;
+        this.gameService.toggleDemoQuestions(true);
+      })
+    );
   }
 
   ngOnDestroy(): void {
@@ -169,6 +204,30 @@ export class LobbyComponent implements OnInit, OnDestroy {
     // If moderator ends game, broadcast to other users
     if (this.lobby.isModerator) {
       this.lobbyService.endGame(this.lobbyCode);
+    }
+  }
+
+  loadDemoQuestions(): void {
+    this.isDemoQuestionsLoaded = true;
+    this.gameService.toggleDemoQuestions(true);
+
+    // Use lobby service to broadcast to all participants
+    if (this.lobby.isModerator) {
+      this.lobbyService.loadDemoQuestions(this.lobbyCode);
+    }
+  }
+  triggerFileInput(): void {
+    this.fileInput.nativeElement.click();
+  }
+
+  onFileSelected(event: any): void {
+    const file: File = event.target.files[0];
+    if (file) {
+      // Currently doing nothing with the file as per requirements
+      console.log('File selected:', file.name);
+
+      // Reset the input so the same file can be selected again
+      this.fileInput.nativeElement.value = '';
     }
   }
 }

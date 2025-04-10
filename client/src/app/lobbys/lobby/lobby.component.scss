@@ -126,15 +126,28 @@ h1 {
   margin-bottom: 20px;
 }
 
-::ng-deep .start-game-btn {
+.button-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 10px;
   margin-top: 50px;
+  height: 100px;
+}
+
+::ng-deep .game-control-btn {
   width: 100%;
   .p-button {
     width: 100%;
   }
+  ng-icon {
+    font-size: 1.5rem;
+    display: flex;
+    overflow: visible;
+  }
 }
+
 ::ng-deep .end-game-btn {
-  margin-top: 50px;
   width: 100%;
   .p-button {
     width: 100%;
@@ -154,7 +167,6 @@ h1 {
 }
 
 .end-game-btn {
-  margin-top: 50px;
   width: 100%;
   .p-button {
     width: 100%;

@@ -18,15 +18,44 @@
       <app-get-lobby-code></app-get-lobby-code>
       <!-- Fix error by adding null check for lobby?.isModerator -->
       <div class="game-actions" *ngIf="lobby?.isModerator && !isGameStarted">
-        <p-button class="start-game-btn" (click)="startGame()">
-          SPIEL STARTEN
-        </p-button>
+        <div class="button-container">
+          <p-button
+            class="game-control-btn"
+            (click)="startGame()"
+            *ngIf="isDemoQuestionsLoaded"
+          >
+            <ng-icon name="gameRetroController" class="mr-2"></ng-icon>
+            SPIEL STARTEN
+          </p-button>
+          <p-button
+            *ngIf="!isDemoQuestionsLoaded"
+            class="game-control-btn"
+            (click)="loadDemoQuestions()"
+          >
+            <ng-icon name="gameAbstract020" class="mr-2"></ng-icon>
+            DEMOFRAGEN LADEN
+          </p-button>
+          <!-- Add file input and connect it to the button -->
+          <input
+            type="file"
+            #fileInput
+            style="display: none"
+            (change)="onFileSelected($event)"
+            accept=".json"
+          />
+          <p-button class="game-control-btn" (click)="triggerFileInput()">
+            <ng-icon name="gameSave" class="mr-2"></ng-icon>
+            SPIEL HOCHLADEN
+          </p-button>
+        </div>
       </div>
       <!-- Fix error by adding null check for lobby?.isModerator -->
       <div class="game-actions" *ngIf="lobby?.isModerator && isGameStarted">
-        <p-button class="end-game-btn" (click)="endGame()">
-          SPIEL BEENDEN
-        </p-button>
+        <div class="button-container">
+          <p-button class="end-game-btn" (click)="endGame()">
+            SPIEL BEENDEN
+          </p-button>
+        </div>
       </div>
     </div>
 

@@ -28,6 +28,10 @@ export class GameService {
   private gameDataSubject = new BehaviorSubject<GameData | null>(null);
   public gameData$ = this.gameDataSubject.asObservable();
 
+  // New subject to track if demo questions are activated
+  private showDemoQuestionsSubject = new BehaviorSubject<boolean>(false);
+  public showDemoQuestions$ = this.showDemoQuestionsSubject.asObservable();
+
   private loadedGameFile: GameFile = gameFile as GameFile;
 
   constructor(private http: HttpClient) {
@@ -63,5 +67,23 @@ export class GameService {
    */
   getQuestion(id: string): Question | undefined {
     return this.loadedGameFile.gameData?.questions.find((q) => q.id === id);
+  }
+
+  /**
+   * Toggle showing demo questions
+   */
+  toggleDemoQuestions(show: boolean): void {
+    console.log(`GameService: Setting showDemoQuestions to ${show}`);
+    this.showDemoQuestionsSubject.next(show);
+    console.log(
+      `GameService: Current showDemoQuestions value: ${this.showDemoQuestionsSubject.value}`
+    );
+  }
+
+  /**
+   * Check if demo questions are currently active
+   */
+  isDemoQuestionsActive(): boolean {
+    return this.showDemoQuestionsSubject.value;
   }
 }

@@ -1588,6 +1588,28 @@ io.on("connection", (socket) => {
       console.log(`emitUserList: Lobby not found for code ${lobbyCode}`);
     }
   }
+
+  // Add new handler for demo questions loading
+  socket.on("game:loadDemoQuestions", (lobbyCode) => {
+    console.log("Demo questions loaded in lobby:", lobbyCode);
+    const foundUser = findUserBySocketId(socket.id);
+
+    if (foundUser) {
+      const lobby = lobbys.find((lobby) => lobby.lobbyCode === lobbyCode);
+      if (lobby && lobby.moderator.username === foundUser.username) {
+        // Broadcast to everyone in the lobby including the sender
+        io.to(lobbyCode).emit("game:demoQuestionsLoaded");
+
+        // Log event in lobby history
+        addEventToLobbyEventHistory(
+          lobbyCode,
+          "game:demoQuestionsLoaded",
+          foundUser.username,
+          {}
+        );
+      }
+    }
+  });
 });
 
 function findUserBySocketId(socketId) {

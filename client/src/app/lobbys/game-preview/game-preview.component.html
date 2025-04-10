@@ -1,13 +1,25 @@
 <div class="game-preview-container">
   <!-- Game data display -->
   <div class="game-info" *ngIf="gameData">
-    <h2 class="game-title">{{ gameData.title }}</h2>
+    <h2 class="game-title" *ngIf="showDemoQuestions">
+      {{ gameData.title }}
+    </h2>
+    <h2 class="game-title" *ngIf="!showDemoQuestions">
+      {{ placeholderTitle }}
+    </h2>
     <div class="game-description">
-      <p>{{ gameData.description }}</p>
+      <p *ngIf="showDemoQuestions">
+        {{ gameData.description }}
+      </p>
+      <p *ngIf="!showDemoQuestions">
+        {{ placeholderDescription }}
+      </p>
     </div>
 
     <div class="questions-info">
-      <p class="questions-count">{{ gameData.questions.length }} Fragen</p>
+      <p class="questions-count" *ngIf="showDemoQuestions">
+        {{ gameData.questions.length }} Fragen
+      </p>
     </div>
   </div>
 

@@ -83,6 +83,9 @@ export class LobbyService {
     username: string;
   } | null>(null);
 
+  // Add new subject for demo questions loaded event
+  private demoQuestionsLoadedSubject = new Subject<void>();
+
   private currentLobby: Lobby | null = null;
   private socket!: Socket;
 
@@ -353,6 +356,12 @@ export class LobbyService {
     this.socket.on('buzzer:evaluated', (judgment: BuzzerJudgment) => {
       console.log('Buzzer evaluated:', judgment);
       this.buzzerJudgmentSubject.next(judgment);
+    });
+
+    // Add listener for demo questions loaded event
+    this.socket.on('game:demoQuestionsLoaded', () => {
+      console.log('Demo questions loaded event received');
+      this.demoQuestionsLoadedSubject.next();
     });
   }
 
@@ -748,6 +757,17 @@ export class LobbyService {
       img.onload = (event) => resolve(event);
       img.onerror = (error) => reject(error);
     });
+  }
+
+  // Add method to broadcast the demo questions loaded state
+  public loadDemoQuestions(lobbyCode: string): void {
+    console.log('Emitting game:loadDemoQuestions event for lobby:', lobbyCode);
+    this.socket.emit('game:loadDemoQuestions', lobbyCode);
+  }
+
+  // Add observable for demo questions loaded event
+  public onDemoQuestionsLoaded(): Observable<void> {
+    return this.demoQuestionsLoadedSubject.asObservable();
   }
 }
 export type { SubmittedAnswer };
