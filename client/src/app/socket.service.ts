@@ -9,9 +9,9 @@ import { BehaviorSubject, Observable } from 'rxjs';
 export class SocketService {
   private static socket: Socket;
   private static httpClient: HttpClient;
-  // private serverUrl = 'https://live-gameshow.onrender.com'; // Replace with your server URL
+  private serverUrl = 'https://live-gameshow.onrender.com';
 
-  private serverUrl = 'http://localhost:3000'; // Replace with your server URL
+  // private serverUrl = 'http://localhost:3000';
   private connectionStatusSubject = new BehaviorSubject<boolean>(false);
 
   constructor(httpClient: HttpClient) {
