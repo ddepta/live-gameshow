@@ -1,4 +1,21 @@
-<button class="gradient-toggle-btn" (click)="toggleGradient()">
-  <ng-icon name="phosphorBinaryBold" size="24px"></ng-icon>
-</button>
+<div class="control-buttons">
+  <button class="gradient-toggle-btn" (click)="toggleGradient()">
+    <ng-icon
+      [name]="gradientEnabled ? 'phosphorBinaryBold' : 'phosphorBinary'"
+      size="24px"
+    ></ng-icon>
+  </button>
+
+  <button class="music-toggle-btn" (click)="toggleMusic()">
+    <ng-icon
+      [name]="isPlaying ? 'phosphorSpeakerHighBold' : 'phosphorSpeakerXBold'"
+      size="24px"
+    >
+    </ng-icon>
+  </button>
+</div>
+
+<!-- Audio player (hidden) -->
+<audio #audioPlayer [src]="streamUrl" preload="none" [volume]="0.2"></audio>
+
 <router-outlet />

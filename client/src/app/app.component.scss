@@ -12,15 +12,20 @@ h1 {
   text-align: center;
 }
 
-.gradient-toggle-btn {
+.control-buttons {
   position: fixed;
   top: 20px;
   left: 20px;
   z-index: 1000;
-  background-color: var(--p-surface-900);
+  display: flex;
+  gap: 15px;
+}
+
+.gradient-toggle-btn,
+.music-toggle-btn {
+  background-color: transparent;
   color: var(--p-primary-color);
-  border: 1px solid var(--p-primary-color);
-  border-radius: 5px;
+  border: none;
   padding: 8px;
   width: 40px;
   height: 40px;
@@ -29,11 +34,11 @@ h1 {
   justify-content: center;
   font-family: "Orbit";
   cursor: pointer;
-  box-shadow: 0 0 10px rgba(0, 255, 191, 0.4);
   transition: all 0.3s ease;
 
   &:hover {
-    background-color: var(--p-surface-800);
-    box-shadow: 0 0 15px rgba(0, 255, 191, 0.6);
+    color: var(--p-primary-color);
+    filter: drop-shadow(0 0 8px rgba(0, 255, 191, 0.7));
+    transform: scale(1.1);
   }
 }
