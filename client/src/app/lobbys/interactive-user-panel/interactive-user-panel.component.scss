@@ -1,7 +1,7 @@
 .panel-wrapper {
   position: relative;
   width: 100%;
-  max-width: 300px; // Beibehalten oder anpassen
+  max-width: 350px; // Beibehalten oder anpassen
   display: flex;
   justify-content: center;
   // Füge Padding hinzu, um Platz für die äußeren Buttons zu schaffen
@@ -11,7 +11,7 @@
   width: 100%; // Nimmt die Breite innerhalb des Wrappers ein
   // min-width und max-width sind jetzt weniger relevant, da die Breite durch den Wrapper gesteuert wird
   min-width: 200px;
-  max-width: 300px; // Entfernt oder angepasst, da panel-wrapper dies steuert
+  max-width: 350px; // Entfernt oder angepasst, da panel-wrapper dies steuert
   display: flex;
   flex-direction: column;
   border: 2px solid var(--p-primary-color);
